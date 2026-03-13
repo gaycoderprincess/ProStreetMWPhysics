@@ -1,0 +1,618 @@
+class MWWheel {
+public:
+	WWorldPos mWorldPos;
+	UMath::Vector4 mNormal;
+	UMath::Vector3 mPosition;
+	unsigned int mFlags;
+	UMath::Vector3 mForce;
+	float mAirTime;
+	UMath::Vector3 mLocalArm;
+	float mCompression;
+	UMath::Vector3 mWorldArm;
+	int pad;
+	UMath::Vector3 mVelocity;
+	int pad2;
+	float mSurfaceStick;
+	UMath::Vector4 mIntegral;
+
+	MWWheel(unsigned int flags) {
+		SUSPENSIONRACER_FUNCTION_LOG("Wheel::Wheel");
+		memset(this,0,sizeof(*this));
+		mFlags = flags;
+		Reset();
+	}
+
+	void Reset() {
+		SUSPENSIONRACER_FUNCTION_LOG("Wheel::Reset");
+		mSurfaceStick = 0.0;
+		mIntegral.x = 0.0;
+		mIntegral.y = 0.0;
+		mIntegral.z = 0.0;
+		mIntegral.w = 0.0;
+		mAirTime = 0.0;
+		mVelocity.x = 0.0;
+		mVelocity.y = 0.0;
+		mVelocity.z = 0.0;
+		mCompression = 0.0;
+		mNormal.x = 0.0;
+		mNormal.y = 0.0;
+		mNormal.z = 0.0;
+		mNormal.w = 0.0;
+		mForce.x = 0.0;
+		mForce.y = 0.0;
+		mForce.z = 0.0;
+		mWorldPos = WWorldPos();
+	}
+
+	void UpdateSurface(const Attrib::Collection* surface);
+	bool InitPosition(ICollisionBody* cb, IRigidBody *rb, double maxcompression);
+	bool UpdatePosition(const UMath::Vector3 &body_av, const UMath::Vector3 &body_lv,
+							   const UMath::Matrix4 &body_matrix, const UMath::Vector3 &cog,
+							   float dT, float wheel_radius, bool usecache, const WCollider *collider, float vehicle_height);
+
+	const UMath::Vector4 &GetNormal() const {
+		return mNormal;
+	}
+
+	const UMath::Vector3 &GetPosition() const {
+		return mPosition;
+	}
+
+	void SetPosition(UMath::Vector3 &p) {
+		mPosition = p;
+	}
+
+	void SetY(float y) {
+		mPosition.y = y;
+	}
+
+	const UMath::Vector3 &GetForce() const {
+		return mForce;
+	}
+
+	void SetForce(const UMath::Vector3 &f) {
+		mForce = f;
+	}
+
+	void SetVelocity(const UMath::Vector3 &v) {
+		mVelocity = v;
+	}
+
+	void IncAirTime(float dT) {
+		mAirTime += dT;
+	}
+
+	void SetAirTime(float f) {
+		mAirTime = f;
+	}
+
+	const UMath::Vector3 &GetLocalArm() const {
+		return mLocalArm;
+	}
+
+	void SetLocalArm(UMath::Vector3 &arm) {
+		mLocalArm = arm;
+	}
+
+	const UMath::Vector3 &GetWorldArm() const {
+		return mWorldArm;
+	}
+
+	float GetCompression() const {
+		return mCompression;
+	}
+
+	void SetCompression(float c) {
+		mCompression = UMath::Max(c, 0.0f);
+	}
+
+	const SimSurface *GetSurface() const {
+		static SimSurface tmp = {};
+		memset(&tmp,0,sizeof(tmp));
+		return &tmp;
+	}
+
+	const UMath::Vector3 &GetVelocity() const {
+		return mVelocity;
+	}
+
+	bool IsOnGround() const {
+		return mCompression > 0.0f;
+	}
+
+	void UpdateTime(float dT) {
+		if (mSurfaceStick <= 0.0 || dT >= mSurfaceStick) mSurfaceStick = 0.0;
+		else mSurfaceStick = mSurfaceStick - dT;
+	}
+};
+
+class SuspensionRacer : public VehicleBehavior {
+public:
+	struct Steering {
+		Steering() : InputAverage(0.55f, 60.0f), InputSpeedCoeffAverage(0.15f, 60.0f) {
+			Reset();
+		}
+
+		float Previous;                       // offset 0x0, size 0x4
+		float Wheels[2];                      // offset 0x4, size 0x8
+		float Maximum;                        // offset 0xC, size 0x4
+		float LastMaximum;                    // offset 0x10, size 0x4
+		float LastInput;                      // offset 0x14, size 0x4
+		AverageWindow InputAverage;           // offset 0x18, size 0x38
+		AverageWindow InputSpeedCoeffAverage; // offset 0x50, size 0x38
+		float CollisionTimer;                 // offset 0x88, size 0x4
+		float WallNoseTurn;                   // offset 0x8C, size 0x4
+		float WallSideTurn;                   // offset 0x90, size 0x4
+		float YawControl;                     // offset 0x94, size 0x4
+
+		void Reset() {
+			Previous = 0.0f;
+			Wheels[1] = 0.0f;
+			Wheels[0] = 0.0f;
+			Maximum = 45.0f;
+			LastMaximum = 45.0f;
+			LastInput = 0.0f;
+			InputAverage.Reset(0.0f);
+			InputSpeedCoeffAverage.Reset(0.0f);
+			CollisionTimer = 0.0f;
+			WallNoseTurn = 0.0f;
+			WallSideTurn = 0.0f;
+			YawControl = 1.0f;
+		}
+	};
+
+	struct Drift {
+		Drift() : State(D_OUT), Value(0.0f) {}
+
+		enum eState { D_OUT, D_ENTER, D_IN, D_EXIT } State; // offset 0x0, size 0x4
+		float Value;                                        // offset 0x4, size 0x4
+
+		void Reset() {
+			State = SuspensionRacer::Drift::D_OUT;
+			Value = 0.0f;
+		}
+	};
+
+	struct Burnout {
+		Burnout() : mState(0), mBurnOutTime(0.0f), mTraction(1.0f), mBurnOutAllow(0.0f) {}
+
+		void Update(const float dT, const float speedmph, const float max_slip, const int max_slip_wheel, const float yaw);
+
+		int GetState() {
+			return mState;
+		}
+
+		float GetTraction() {
+			return mTraction;
+		}
+
+		void Reset() {
+			mState = 0;
+			mBurnOutTime = 0.0f;
+			mTraction = 1.0f;
+			mBurnOutAllow = 0.0f;
+		}
+
+		void SetState(int s) {
+			mState = s;
+		}
+
+		void SetBurnOutTime(float t) {
+			mBurnOutTime = t;
+		}
+
+		void SetTraction(float t) {
+			mTraction = t;
+		}
+
+		float GetBurnOutTime(float t) {
+			return mBurnOutTime;
+		}
+
+		void DecBurnOutTime(float t) {
+			mBurnOutTime -= t;
+		}
+
+		void ClearBurnOutAllow() {
+			mBurnOutAllow = 0.0f;
+		}
+
+		void IncBurnOutAllow(float t) {
+			mBurnOutAllow += t;
+		}
+
+	private:
+		int mState;          // offset 0x0, size 0x4
+		float mBurnOutTime;  // offset 0x4, size 0x4
+		float mTraction;     // offset 0x8, size 0x4
+		float mBurnOutAllow; // offset 0xC, size 0x4
+	};
+
+	class Tire : public MWWheel {
+	public:
+		Tire(float radius, int index, const Attrib::Gen::car_tuning *specs, MWCarTuning* mwSpecs, IVehicle* vehicle)
+				: MWWheel(1), mRadius(UMath::Max(radius, 0.1f)), mWheelIndex(index), mAxleIndex(index >> 1), mSpecs(specs), mMWSpecs(mwSpecs), mVehicle(vehicle), mBrake(0.0f),
+				  mEBrake(0.0f), mAV(0.0f), mLoad(0.0f), mLateralForce(0.0f), mLongitudeForce(0.0f), mDriveTorque(0.0f), mBrakeTorque(0.0f), mLateralBoost(1.0f),
+				  mTractionBoost(1.0f), mSlip(0.0f), mLastTorque(0.0f), mRoadSpeed(0.0f), mAngularAcc(0.0f), mTraction(1.0f), mBottomOutTime(0.0f),
+				  mSlipAngle(0.0f), mTractionCircle(UMath::Vector2(1.0f, 1.0f)), mMaxSlip(0.5f), mGripBoost(1.0f), mDriftFriction(1.0f), mLateralSpeed(0.0f),
+				  mBrakeLocked(false), mLastSign(SuspensionRacer::Tire::WAS_ZERO), mDragReduction(0.0f) {}
+		void BeginFrame(float max_slip, float grip_boost, float traction_boost, float drag_reduction);
+		void EndFrame(float dT);
+		float ComputeLateralForce(float load, float slip_angle);
+		float GetPilotFactor(const float speed);
+		void CheckForBrakeLock(float ground_force);
+		void CheckSign();
+		void UpdateFree(float dT);
+		float UpdateLoaded(float lat_vel, float fwd_vel, float body_speed, float load, float dT);
+
+		bool IsSlipping() const {
+			return mTraction >= 1.0f;
+		}
+
+		void SetBrake(float brake) {
+			mBrake = brake;
+		}
+
+		void SetEBrake(float ebrake) {
+			mEBrake = ebrake;
+		}
+
+		float GetEBrake() const {
+			return mEBrake;
+		}
+
+		float GetTraction() const {
+			return mTraction;
+		}
+
+		float GetRoadSpeed() const {
+			return mRoadSpeed;
+		}
+
+		float GetLoad() const {
+			return mLoad;
+		}
+
+		float GetRadius() const {
+			return mRadius;
+		}
+
+		float GetAngularVelocity() const {
+			return mAV;
+		}
+
+		void SetAngularVelocity(float w) {
+			mAV = w;
+		}
+
+		float GetLateralSpeed() const {
+			return mLateralSpeed;
+		}
+
+		float GetCurrentSlip() const {
+			return mSlip;
+		}
+
+		float GetToleratedSlip() const {
+			return mMaxSlip;
+		}
+
+		void SetLateralBoost(float f) {
+			mLateralBoost = f;
+		}
+
+		void SetBottomOutTime(float time) {
+			mBottomOutTime = time;
+		}
+
+		void ScaleTractionBoost(float scale) {
+			mTractionBoost *= scale;
+		}
+
+		void SetDriftFriction(float scale) {
+			mDriftFriction = scale;
+		}
+
+		void ApplyDriveTorque(float torque) {
+			if (!mBrakeLocked) {
+				mDriveTorque += torque;
+			}
+		}
+
+		void ApplyBrakeTorque(float torque) {
+			if (!mBrakeLocked) {
+				mBrakeTorque += torque;
+			}
+		}
+
+		float GetTotalTorque() const {
+			return mDriveTorque + mBrakeTorque;
+		}
+
+		float GetDriveTorque() const {
+			return mDriveTorque;
+		}
+
+		float GetLongitudeForce() const {
+			return mLongitudeForce;
+		}
+
+		bool IsBrakeLocked() const {
+			return mBrakeLocked;
+		}
+
+		bool IsSteeringWheel() const {
+			return mWheelIndex < 2;
+		}
+
+		void SetTractionCircle(const UMath::Vector2 &circle) {
+			mTractionCircle = circle;
+		}
+
+		float GetSlipAngle() const {
+			return mSlipAngle;
+		}
+
+		void MatchSpeed(float speed) {
+			mAV = speed / mRadius;
+			mRoadSpeed = speed;
+			mTraction = 1.0f;
+			mBrakeLocked = false;
+			mSlip = 0.0f;
+			mAngularAcc = 0.0f;
+			mLastTorque = 0.0f;
+			mBrake = 0.0f;
+			mEBrake = 0.0f;
+			mLateralSpeed = 0.0f;
+		}
+
+		const float mRadius;
+		float mBrake;
+		float mEBrake;
+		float mAV;
+		float mLoad;
+		float mLateralForce;
+		float mLongitudeForce;
+		float mDriveTorque;
+		float mBrakeTorque;
+		float mLateralBoost;
+		float mTractionBoost;
+		float mSlip;
+		float mLastTorque;
+		const int mWheelIndex;
+		float mRoadSpeed;
+		const MWCarTuning *mMWSpecs;
+		const Attrib::Gen::car_tuning *mSpecs;
+		IVehicle *mVehicle;
+		float mAngularAcc;
+		const int mAxleIndex;
+		float mTraction;
+		float mBottomOutTime;
+		float mSlipAngle;
+		UMath::Vector2 mTractionCircle;
+		float mMaxSlip;
+		float mGripBoost;
+		float mDriftFriction;
+		float mLateralSpeed;
+		bool mBrakeLocked;
+
+		enum LastRotationSign { WAS_POSITIVE, WAS_ZERO, WAS_NEGATIVE } mLastSign;
+
+		float mDragReduction;
+	};
+
+	float mJumpTime;
+	float mJumpAlititude;
+	float mTireHeat;
+	MWCarTuning* mMWInfo;
+	Attrib::Gen::car_tuning mCarInfo;
+	IEngine *mEngine;
+	IEngineDamage *mEngineDamage;
+	IInput *mInput;
+	IRigidBody *mRB;
+	ICollisionBody *mCollisionBody;
+	ITransmission *mTransmission;
+	IHumanAI *mHumanAI;
+	ISpikeable *mSpikeDamage;
+	float mGameBreaker;
+	unsigned int mNumWheelsOnGround;
+	float mLastGroundCollision;
+	Drift mDrift;
+	Burnout mBurnOut;
+	Steering mSteering;
+	Tire *mTires[4];
+	IChassis tmpChassis;
+
+	struct State {
+		UMath::Matrix4 matrix;
+		UMath::Vector3 local_vel;
+		float gas_input;
+		UMath::Vector3 linear_vel;
+		float brake_input;
+		UMath::Vector3 angular_vel;
+		float ground_effect;
+		UMath::Vector3 cog;
+		float ebrake_input;
+		UMath::Vector3 dimension;
+		Angle steer_input;
+		UMath::Vector3 local_angular_vel;
+		Angle slipangle;
+		UMath::Vector3 inertia;
+		float mass;
+		UMath::Vector3 world_cog;
+		float speed;
+		float time;
+		int flags;
+		short driver_style;
+		short driver_class;
+		short gear;
+		short blown_tires;
+		float nos_boost;
+		float shift_boost;
+		const WCollider *collider;
+
+		enum Flags { IS_STAGING = 1, IS_DESTROYED };
+
+		const UMath::Vector3 &GetRightVector() const {
+			return *(UMath::Vector3*)&matrix.x;
+		}
+		const UMath::Vector3 &GetUpVector() const {
+			return *(UMath::Vector3*)&matrix.y;
+		}
+		const UMath::Vector3 &GetForwardVector() const {
+			return *(UMath::Vector3*)&matrix.z;
+		}
+		const UMath::Vector3 &GetPosition() const {
+			return *(UMath::Vector3*)&matrix.p;
+		}
+	};
+
+	struct Differential {
+		void CalcSplit(bool locked);
+
+		float angular_vel[2];
+		int has_traction[2];
+		float bias;
+		float factor;
+		float torque_split[2];
+	};
+
+	ISimable* GetOwner() const {
+		return Behavior::mIOwner;
+	}
+
+	IVehicle* GetVehicle() const {
+		return mVehicle;
+	}
+
+	bool RearWheelDrive() {
+		return mMWInfo->TORQUE_SPLIT < 1.0f;
+	}
+
+	bool FrontWheelDrive() {
+		return mMWInfo->TORQUE_SPLIT > 0.0f;
+	}
+
+	bool IsDriveWheel(unsigned int i) {
+		return (IsRear(i) && RearWheelDrive()) || (IsFront(i) && FrontWheelDrive());
+	}
+
+	Tire &GetWheel(unsigned int i) {
+		return *mTires[i];
+	}
+
+	const Tire &GetWheel(unsigned int i) const {
+		return *mTires[i];
+	}
+
+	// hack around this enough so the compiler doesn't complain about the vtable being missing
+	IChassis* GetIChassis() { GET_FAKE_INTERFACE(SuspensionRacer, IChassis, tmpChassis) }
+
+	void OnOwnerAttached(IAttachable* pOther) { SUSPENSIONRACER_FUNCTION_LOG("OnOwnerAttached"); }
+	void OnOwnerDetached(IAttachable* pOther) { SUSPENSIONRACER_FUNCTION_LOG("OnOwnerDetached"); }
+	void OnPause() { SUSPENSIONRACER_FUNCTION_LOG("OnPause");  }
+	void OnUnPause() { SUSPENSIONRACER_FUNCTION_LOG("OnUnPause");  }
+	void OnDebugDraw() { SUSPENSIONRACER_FUNCTION_LOG("OnDebugDraw");  }
+	int GetPriority() { SUSPENSIONRACER_FUNCTION_LOG("GetPriority"); return mPriority; }
+	float GetDownCoefficient(float f) { SUSPENSIONRACER_FUNCTION_LOG("GetDownCoefficient"); return GetIChassis()->GetDownCoefficient(); }
+	float GetDynamicRideHeight(unsigned int idx, State*) { SUSPENSIONRACER_FUNCTION_LOG("GetDynamicRideHeight"); return GetRideHeight(idx); }
+	float GetDriftValue() { SUSPENSIONRACER_FUNCTION_LOG("GetDriftValue"); return 0.0; } // todo
+	void ApplyVehicleEntryForces(bool enteringVehicle, const UMath::Vector3 *pos, bool calledfromEvent) { SUSPENSIONRACER_FUNCTION_LOG("ApplyVehicleEntryForces");  }
+
+	void dtor(char a2);
+	void Reset();
+	float CalculateUndersteerFactor();
+	float CalculateOversteerFactor();
+	void MatchSpeed(float speed);
+	Meters GetRideHeight(unsigned int idx) const;
+	void DoDrifting(const State &state);
+	float CalcYawControlLimit(float speed) const;
+	void TuneWheelParams(State &state);
+	float CalculateMaxSteering(State &state, ISteeringWheel::SteeringType steer_type);
+	float CalculateSteeringSpeed(State &state);
+	float DoHumanSteering(State &state);
+	void ComputeAckerman(const float steering, const State &state, UMath::Vector4 *left, UMath::Vector4 *right) const;
+	float DoAISteering(State &state);
+	void DoWallSteer(State &state);
+	void DoSteering(State &state, UMath::Vector3 &right, UMath::Vector3 &left);
+	void DoWheelForces(State &state);
+	void ComputeState(float dT, State &state);
+	void SetCOG(float extra_bias, float extra_ride);
+	Mps ComputeMaxSlip(const State &state) const;
+	float ComputeLateralGripScale(const State &state) const;
+	float ComputeTractionScale(const State &state) const;
+	void DoTireHeat(const State &state);
+	void DoAerodynamics(const State &state, float drag_pct, float aero_pct, float aero_front_z, float aero_rear_z, const Physics::Tunings *tunings);
+
+	enum SleepState {
+		SS_LATERAL = 2,
+		SS_ALL = 1,
+		SS_NONE = 0,
+	};
+
+	void CreateTires();
+	void OnTaskSimulate(float dT);
+	void OnBehaviorChange(const UCrc32 &mechanic);
+	void Create(const BehaviorParams& bp);
+	void DoJumpStabilizer(const State& bp);
+	void DoDriveForces(State &state);
+	SleepState DoSleep(const State &state);
+
+	Physics::Tunings* GetVehicleTunings() const {
+		if (auto veh = GetVehicle()->GetCustomizations()) {
+			static Physics::Tunings tmp;
+			memset(&tmp, 0, sizeof(tmp));
+
+			// engine -1.0 1.0 tune 2, -1 torque 1 horsepower
+			// suspension -1.0 1.0 tune 3, -1 soft 1 stiff
+			// drivetrain -1.0 1.0 tune 1, -1 accel 1 top speed
+			// tires -1.0 1.0 tune 4, -1 loose 1 grip
+			// nitrous -1.0 1.0 tune 0, -1 strength 1 duration
+
+			tmp.Value[Physics::Tunings::NOS] = veh->PhysicsTuning[0];
+			tmp.Value[Physics::Tunings::HANDLING] = veh->PhysicsTuning[4];
+			return &tmp;
+		}
+		else {
+			return nullptr;
+		}
+	}
+
+	const UMath::Vector3 &GetWheelPos(unsigned int i) const {
+		return mTires[i]->GetPosition();
+	}
+	const UMath::Vector3 &GetWheelLocalPos(unsigned int i) const {
+		return mTires[i]->GetLocalArm();
+	}
+	const float GetWheelRoadHeight(unsigned int i) const {
+		return mTires[i]->GetNormal().w;
+	}
+	float GetCompression(unsigned int i) const {
+		return mTires[i]->GetCompression();
+	}
+	const UMath::Vector4 &GetWheelRoadNormal(unsigned int i) const {
+		return mTires[i]->GetNormal();
+	}
+	bool IsWheelOnGround(unsigned int i) const {
+		return mTires[i]->IsOnGround();
+	}
+	const SimSurface* GetWheelRoadSurface(unsigned int i) const {
+		return mTires[i]->GetSurface();
+	}
+	const UMath::Vector3 &GetWheelVelocity(unsigned int i) const {
+		return mTires[i]->GetVelocity();
+	}
+	int GetNumWheelsOnGround() const {
+		return mNumWheelsOnGround;
+	}
+	float GetWheelSteer(unsigned int wheel) const {
+		return wheel < 2 ? RAD2ANGLE(mSteering.Wheels[wheel]) : 0.0f;
+	}
+	float GetMaxSteering() const {
+		return DEG2ANGLE(mSteering.Maximum);
+	}
+	float GetWheelSlipAngle(unsigned int idx) const {
+		return mTires[idx]->GetSlipAngle();
+	}
+};
+SuspensionRacer* pSuspension = nullptr;
