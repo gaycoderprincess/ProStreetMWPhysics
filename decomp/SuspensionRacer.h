@@ -12,6 +12,7 @@ public:
 	int pad;
 	UMath::Vector3 mVelocity;
 	int pad2;
+	Attrib::Instance mSurface;
 	float mSurfaceStick;
 	UMath::Vector4 mIntegral;
 
@@ -107,9 +108,11 @@ public:
 	}
 
 	const SimSurface *GetSurface() const {
-		static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
-		surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));
-		return (SimSurface*)&surf;
+		return (SimSurface*)&mSurface;
+
+		//static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
+		//surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));
+		//return (SimSurface*)&surf;
 
 		//static SimSurface tmp = {};
 		//memset(&tmp,0,sizeof(tmp));

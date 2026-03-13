@@ -362,13 +362,10 @@ float SuspensionRacer::Tire::UpdateLoaded(float lat_vel, float fwd_vel, float bo
 		mTraction *= max_slip / UMath::Abs(slip_speed);
 	}
 
-	// todo this is different in UC
-	//auto fDriveGrip = mSurface.GetLayout()->DRIVE_GRIP;
-	//auto fLateralGrip = mSurface.GetLayout()->LATERAL_GRIP;
-	//auto fRollingResistance = mSurface.GetLayout()->ROLLING_RESISTANCE;
-	auto fDriveGrip = 1.0f;
-	auto fLateralGrip = 1.0f;
-	auto fRollingResistance = 1.0f;
+	auto surface = (Attrib::Gen::simsurface::_LayoutStruct*)mSurface.mLayoutPtr;
+	auto fDriveGrip = surface ? surface->DRIVE_GRIP : 1.0;
+	auto fLateralGrip = surface ? surface->LATERAL_GRIP : 1.0;
+	auto fRollingResistance = surface ? surface->ROLLING_RESISTANCE : 1.0;
 
 	// factor surface friction into the tire force
 	mLateralForce *= fLateralGrip;
@@ -1851,7 +1848,9 @@ void SuspensionRacer::OnTaskSimulate(float dT) {
 	//Chassis::OnTaskSimulate(dT);
 }
 
-void MWWheel::UpdateSurface(const Attrib::Collection* surface) {}
+void MWWheel::UpdateSurface(const Attrib::Collection* surface) {
+	mSurface = Attrib::Instance(surface, 0);
+}
 
 bool MWWheel::InitPosition(ICollisionBody* cb, IRigidBody *rb, double maxcompression) {
 	//FUNCTION_LOG("Wheel::InitPosition");
