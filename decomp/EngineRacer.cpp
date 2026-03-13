@@ -763,6 +763,7 @@ static const float Tweak_EngineDamageFrequency = 12.0f;
 static const float Tweak_EngineDamageAmplitude = 0.5f;
 static const float Tweak_EngineCounterClutch = 0.0f;
 
+int nNOSState = 0;
 void EngineRacer::OnTaskSimulate(float dT) {
 	IInput *iinput = mIInput;
 	if (iinput == NULL || mSuspension == NULL) {
@@ -780,6 +781,8 @@ void EngineRacer::OnTaskSimulate(float dT) {
 	DoECU();
 	DoInduction(tunings, dT);
 	DoShifting(dT);
+
+	nNOSState = iinput->GetControlNOS();
 
 	float max_rpm = UseRevLimiter() ? mMWInfo->RED_LINE : mMWInfo->MAX_RPM;
 	float max_w = RPM2RPS(max_rpm);

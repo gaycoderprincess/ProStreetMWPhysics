@@ -15,7 +15,7 @@ namespace MWInductable {
 	int __thiscall GetInductionType(uintptr_t ptr) {
 		IINDUCTABLE_FUNCTION_LOG("GetInductionType");
 		auto pThis = GetEngineRacer(ptr);
-		return pThis->InductionType();
+		return INDUCTIONUC_NONE; // the game crashes if the car has a turbocharger
 	}
 
 	float __thiscall GetSpool(uintptr_t ptr) {

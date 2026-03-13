@@ -35,20 +35,20 @@ public:
 //#define FUNCTION_LOG(name) WriteLog(std::format("{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
 #define SUSPENSIONRACER_FUNCTION_LOG(name) WriteLog(std::format("SuspensionRacer::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
 #define ENGINERACER_FUNCTION_LOG(name) WriteLog(std::format("EngineRacer::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
-//#define ICHASSIS_FUNCTION_LOG(name) WriteLog(std::format("IChassis::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define ITIPTRONIC_FUNCTION_LOG(name) WriteLog(std::format("ITiptronic::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define IRACEENGINE_FUNCTION_LOG(name) WriteLog(std::format("IRaceEngine::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define IENGINEDAMAGE_FUNCTION_LOG(name) WriteLog(std::format("IEngineDamage::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define IINDUCTABLE_FUNCTION_LOG(name) WriteLog(std::format("IInductable::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define ITRANSMISSION_FUNCTION_LOG(name) WriteLog(std::format("ITransmission::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-//#define IENGINE_FUNCTION_LOG(name) WriteLog(std::format("IEngine::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
-#define ICHASSIS_FUNCTION_LOG(name) {}
-#define ITIPTRONIC_FUNCTION_LOG(name) {}
-#define IRACEENGINE_FUNCTION_LOG(name) {}
-#define IENGINEDAMAGE_FUNCTION_LOG(name) {}
-#define IINDUCTABLE_FUNCTION_LOG(name) {}
-#define ITRANSMISSION_FUNCTION_LOG(name) {}
-#define IENGINE_FUNCTION_LOG(name) {}
+#define ICHASSIS_FUNCTION_LOG(name) WriteLog(std::format("IChassis::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define ITIPTRONIC_FUNCTION_LOG(name) WriteLog(std::format("ITiptronic::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define IRACEENGINE_FUNCTION_LOG(name) WriteLog(std::format("IRaceEngine::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define IENGINEDAMAGE_FUNCTION_LOG(name) WriteLog(std::format("IEngineDamage::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define IINDUCTABLE_FUNCTION_LOG(name) WriteLog(std::format("IInductable::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define ITRANSMISSION_FUNCTION_LOG(name) WriteLog(std::format("ITransmission::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+#define IENGINE_FUNCTION_LOG(name) WriteLog(std::format("IEngine::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
+//#define ICHASSIS_FUNCTION_LOG(name) {}
+//#define ITIPTRONIC_FUNCTION_LOG(name) {}
+//#define IRACEENGINE_FUNCTION_LOG(name) {}
+//#define IENGINEDAMAGE_FUNCTION_LOG(name) {}
+//#define IINDUCTABLE_FUNCTION_LOG(name) {}
+//#define ITRANSMISSION_FUNCTION_LOG(name) {}
+//#define IENGINE_FUNCTION_LOG(name) {}
 
 #include "decomp/ConversionUtil.hpp"
 
@@ -571,6 +571,21 @@ UCrc32* __thiscall LookupBehaviorSignatureHooked(PVehicle* pThis, UCrc32* result
 	return pThis->LookupBehaviorSignature(result, mechanic);
 }
 
+uintptr_t StickyNOSASM_jmp = 0x41AD8F;
+void __attribute__((naked)) __fastcall StickyNOSASM() {
+	__asm__ (
+		"mov edx, [esi]\n\t"
+		"mov eax, [edx+8]\n\t"
+		"mov ecx, %1\n\t"
+		"mov [esp+0x18], cl\n\t"
+		"mov ecx, esi\n\t"
+		"mov [esp+0x20], ebx\n\t"
+		"jmp %0\n\t"
+			:
+			:  "m" (StickyNOSASM_jmp), "m" (nNOSState)
+	);
+}
+
 BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 	switch( fdwReason ) {
 		case DLL_PROCESS_ATTACH: {
@@ -613,18 +628,22 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 			ChloeMenuLib::RegisterMenu("MW Physics Debug Menu", &DebugMenu);
 
+			NyaHookLib::PatchRelative(NyaHookLib::JMP, 0x41AD80, &StickyNOSASM);
+
 			NyaHookLib::PatchRelative(NyaHookLib::CALL, 0x72BD95, &LookupBehaviorSignatureHooked);
 			NyaHookLib::PatchRelative(NyaHookLib::CALL, 0x72BD3E, &LookupBehaviorSignatureHooked);
 
 			// AIVehicle::GetOverSteerCorrection, disable road surface getter during race cutscenes
 			//NyaHookLib::Patch<uint16_t>(0x40AFE9, 0x9090);
 
+			NyaHookLib::Patch<uint16_t>(0x55C9CE, 0x9090); // proper nos display
+
 			NyaHooks::SkipFEFixes::Init();
 
-			SkipFE = true;
-			SkipFEForever = true;
-			SkipFEPlayerCar = "rx7";
-			SkipFETrackNumber = 6000;
+			//SkipFE = true;
+			//SkipFEForever = true;
+			//SkipFEPlayerCar = "rx7";
+			//SkipFETrackNumber = 6000;
 
 			WriteLog("Mod initialized");
 		} break;
