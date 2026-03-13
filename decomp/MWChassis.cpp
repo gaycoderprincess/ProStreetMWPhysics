@@ -219,7 +219,9 @@ namespace MWChassis {
 		if (!pThis->mRB) {
 			return result;
 		} else {
-			UMath::ScaleAdd(*pThis->mRB->GetUpVector(), pThis->mTires[i]->GetRadius(), *result, *result);
+			UMath::Vector3 tmp;
+			pThis->mRB->GetUpVector(&tmp);
+			UMath::ScaleAdd(tmp, pThis->mTires[i]->GetRadius(), *result, *result);
 			return result;
 		}
 	}
@@ -522,7 +524,7 @@ namespace MWChassis {
 	}
 
 	void* NewVTable[] = {
-			(void*)0x7B8560, // generic interface dtor
+			(void*)0x0, // dtor
 			(void*)&GetChassisName,
 			(void*)&GetWheelTraction,
 			//(void*)&GetWheelDynamicSlipAngle,

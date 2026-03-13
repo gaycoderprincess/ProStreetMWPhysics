@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(NFSUCMWPhysics)
+project(NFSPSMWPhysics)
 
 SET(CMAKE_SYSTEM_NAME Windows)
 
@@ -14,12 +14,12 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -masm=intel -s -static")
 
 add_compile_definitions(NYA_COMMON_NO_D3D SUSPENSIONRACER_ELISE_TEST)
 #add_compile_definitions(NYA_COMMON_NO_D3D)
-add_library(NFSUCMWPhysics SHARED main.cpp)
-target_include_directories(NFSUCMWPhysics PUBLIC ../nya-common)
-target_include_directories(NFSUCMWPhysics PUBLIC ../nya-common/3rdparty)
-target_include_directories(NFSUCMWPhysics PUBLIC ../nya-common-nfsuc)
-target_include_directories(NFSUCMWPhysics PUBLIC ../CwoeeMenuLib)
-target_link_options(NFSUCMWPhysics PRIVATE "-Wl,--exclude-all-symbols")
+add_library(NFSPSMWPhysics SHARED main.cpp)
+target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common)
+target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common/3rdparty)
+target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common-nfsps)
+target_include_directories(NFSPSMWPhysics PUBLIC ../CwoeeMenuLib)
+target_link_options(NFSPSMWPhysics PRIVATE "-Wl,--exclude-all-symbols")
 
-set_target_properties(NFSUCMWPhysics PROPERTIES PREFIX "")
-set_target_properties(NFSUCMWPhysics PROPERTIES SUFFIX "_gcp.asi")
+set_target_properties(NFSPSMWPhysics PROPERTIES PREFIX "")
+set_target_properties(NFSPSMWPhysics PROPERTIES SUFFIX "_gcp.asi")

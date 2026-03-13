@@ -367,13 +367,13 @@ void GetLerpedCarTuning(MWCarTuning& tmp, const std::string& model, float brake,
 
 void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
 	if (cust) {
-		float brake = (cust->InstalledParts[CARSLOTID_BRAKE_PACKAGE].kit_num + 1) / 4.0;
-		float drivetrain = (cust->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE].kit_num + 1) / 4.0;
-		float engine = (cust->InstalledParts[CARSLOTID_ENGINE_PACKAGE].kit_num + 1) / 4.0;
-		float induction = (cust->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE].kit_num + 1) / 4.0;
-		float nitro = cust->InstalledParts[CARSLOTID_NITROUS_PACKAGE].kit_num / 3.0;
-		float suspension = (cust->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE].kit_num + 1) / 4.0;
-		float tire = (cust->InstalledParts[CARSLOTID_TIRE_PACKAGE].kit_num + 1) / 4.0;
+		float brake = (cust->InstalledParts[CARSLOTID_TIRE_PACKAGE] + 1) / 4.0; // todo are brake upgrades not a thing here?
+		float drivetrain = (cust->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE] + 1) / 4.0;
+		float engine = (cust->InstalledParts[CARSLOTID_ENGINE_PACKAGE] + 1) / 4.0;
+		float induction = (cust->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE] + 1) / 4.0;
+		float nitro = cust->InstalledParts[CARSLOTID_NITROUS_PACKAGE] / 3.0;
+		float suspension = (cust->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE] + 1) / 4.0;
+		float tire = (cust->InstalledParts[CARSLOTID_TIRE_PACKAGE] + 1) / 4.0;
 		return GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
 	}
 	else {

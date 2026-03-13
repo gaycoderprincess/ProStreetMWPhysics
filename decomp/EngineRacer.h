@@ -65,7 +65,7 @@ namespace Physics {
 			return 0.0f;
 		}
 
-		float WheelDiameter(const Attrib::Gen::car_tuning& tires, bool front) {
+		float WheelDiameter(const Attrib::Gen::vehicle& tires, bool front) {
 			int axle = front ? 0 : 1;
 			float diameter = INCH2METERS(tires.GetLayout()->RIM_SIZE.At(axle));
 			return diameter + tires.GetLayout()->SECTION_WIDTH.At(axle) * 0.001f * 2.0f * (tires.GetLayout()->ASPECT_RATIO.At(axle) * 0.01f);
@@ -91,7 +91,7 @@ namespace Physics {
 		}
 
 		// Credits: Brawltendo
-		Mps Speedometer(const MWCarTuning* mw, const Attrib::Gen::car_tuning& engine, Rpm rpm, GearID gear, const Tunings *tunings) {
+		Mps Speedometer(const MWCarTuning* mw, const Attrib::Gen::vehicle& engine, Rpm rpm, GearID gear, const Tunings *tunings) {
 			float speed = 0.0f;
 			float gear_ratio = mw->GEAR_RATIO[gear] * mw->FINAL_GEAR;
 			float power_range = mw->RED_LINE - mw->IDLE;
@@ -635,7 +635,7 @@ class EngineRacer : public VehicleBehavior {
 	IInput *mIInput;
 	IChassis *mSuspension;
 	MWCarTuning* mMWInfo;
-	Attrib::Gen::car_tuning mCarInfo;
+	Attrib::Gen::vehicle mCarInfo;
 	float mRPM;
 	ShiftStatus mShiftStatus;
 	ShiftPotential mShiftPotential;

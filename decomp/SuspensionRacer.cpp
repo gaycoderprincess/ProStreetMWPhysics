@@ -446,7 +446,7 @@ void SuspensionRacer::OnBehaviorChange(const UCrc32 &mechanic) {
 }
 
 void* NewSuspensionRacerVTable[] = {
-		(void*)0x69F570, // generic OnService
+		(void*)0x579670, // generic OnService
 		(void*)&SuspensionRacer::dtor,
 		(void*)&SuspensionRacer::Reset,
 		(void*)&SuspensionRacer::GetPriority,
@@ -457,12 +457,7 @@ void* NewSuspensionRacerVTable[] = {
 		(void*)&SuspensionRacer::OnPause,
 		(void*)&SuspensionRacer::OnUnPause,
 		(void*)&SuspensionRacer::OnDebugDraw,
-		(void*)&SuspensionRacer::CalculateUndersteerFactor,
-		(void*)&SuspensionRacer::CalculateOversteerFactor,
-		(void*)&SuspensionRacer::GetDownCoefficient,
 		(void*)&SuspensionRacer::GetDynamicRideHeight,
-		(void*)&SuspensionRacer::GetDriftValue,
-		(void*)&SuspensionRacer::ApplyVehicleEntryForces,
 };
 
 void SuspensionRacer::Create(const BehaviorParams& bp) {
@@ -477,7 +472,7 @@ void SuspensionRacer::Create(const BehaviorParams& bp) {
 	mJumpAlititude = 0.0f;
 	mTireHeat = 0.0f;
 
-	ctor_cartuning(&mCarInfo, cartuning_LookupKey(&mCarInfo, GetOwner(), 0));
+	ctor_cartuning(&mCarInfo, cartuning_LookupKey(GetOwner()));
 	
 	mMWInfo = new MWCarTuning;
 	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
@@ -532,9 +527,8 @@ void SuspensionRacer::DoJumpStabilizer(const State &state) {
 
 	int nTouching = mNumWheelsOnGround;
 	bool resolve = false;
-	UMath::Vector3 ground_normal = *mCollisionBody->GetGroundNormal(); // NOTE: it returns a vec3 but heightaboveground is right after it anyway
-	//float altitude = -mCollisionBody->GetHeightAboveGround();
-	float altitude = mCollisionBody->GetHeightAboveGround();
+	UMath::Vector4 ground_normal = *mCollisionBody->GetGroundNormal();
+	float altitude = -ground_normal.w;
 	float ground_dot = UMath::Dot(state.GetUpVector(), ground_normal);
 
 	UMath::Vector3 damping_torque = {0,0,0};
@@ -672,8 +666,7 @@ void SuspensionRacer::SetCOG(float extra_bias, float extra_ride) {
 	float cg_y = INCH2METERS(mMWInfo->ROLL_CENTER) - (dim.y + UMath::Max(INCH2METERS(mMWInfo->RIDE_HEIGHT.At(0) + extra_ride),
 																			  INCH2METERS(mMWInfo->RIDE_HEIGHT.At(1) + extra_ride)));
 	UMath::Vector3 cog{0.0f, cg_y, cg_z};
-	mRB->SetCenterOfGravity(&cog);
-	mRB->OverrideCOG(&cog);
+	mCollisionBody->SetCenterOfGravity(&cog);
 }
 
 void SuspensionRacer::DoTireHeat(const State &state) {
@@ -1272,7 +1265,7 @@ void SuspensionRacer::DoDrifting(const State &state) {
 			UMath::Vector3 moment;
 
 			UMath::Scale(state.GetUpVector(), (mDrift.Value * -ang_vel) * yaw_coef * state.inertia.y, moment);
-			mRB->_ResolveTorque(&moment);
+			mRB->ResolveTorque(&moment);
 		}
 
 		// detect counter steering
@@ -1651,11 +1644,11 @@ void SuspensionRacer::ComputeState(float dT, State &state) {
 	IRigidBody *irb = GetOwner()->GetRigidBody();
 	state.time = dT;
 	state.flags = 0;
-	state.collider = mCollisionBody->GetWCollider();
-	irb->GetInertiaTensor(&state.inertia);
+	state.collider = mRB->GetWCollider();
+	state.inertia = *mCollisionBody->GetInertiaTensor();
 	irb->GetDimension(&state.dimension);
 
-	state.matrix = *irb->GetTransform();
+	irb->GetMatrix4(&state.matrix);
 	state.matrix.p = *irb->GetPosition();
 	state.matrix.pw = 1.0f;
 
@@ -1678,7 +1671,7 @@ void SuspensionRacer::ComputeState(float dT, State &state) {
 	state.ebrake_input = mInput->GetControlHandBrake();
 	state.steer_input = UMath::Clamp(mInput->GetControlSteering(), -1.0f, 1.0f);
 
-	state.cog = *irb->GetCenterOfGravity();
+	state.cog = *mCollisionBody->GetCenterOfGravity();
 	state.ground_effect = mNumWheelsOnGround * 0.25f;
 	state.mass = irb->GetMass();
 	state.driver_style = GetVehicle()->GetDriverStyle();
@@ -1725,19 +1718,6 @@ void SuspensionRacer::ComputeState(float dT, State &state) {
 	LastChassisState = state;
 }
 
-void RigidBodyDamp(IRigidBody* body, float amount) {
-	UMath::Vector3& linearVel = *(UMath::Vector3*)body->GetLinearVelocity();
-	UMath::Vector3& angularVel = *(UMath::Vector3*)body->GetAngularVelocity();
-	UMath::Vector3& force = *(UMath::Vector3*)body->GetForce();
-	UMath::Vector3& torque = *(UMath::Vector3*)body->GetTorque();
-
-	float scale = 1.0f - amount;
-	UMath::Scale(linearVel, scale, linearVel);
-	UMath::Scale(angularVel, scale, angularVel);
-	UMath::Scale(force, scale, force);
-	UMath::Scale(torque, scale, torque);
-}
-
 SuspensionRacer::SleepState SuspensionRacer::DoSleep(const State &state) {
 	if (state.flags & 1) {
 		return SS_NONE;
@@ -1747,9 +1727,9 @@ SuspensionRacer::SleepState SuspensionRacer::DoSleep(const State &state) {
 		if ((GetNumWheelsOnGround() == 4) && (state.brake_input + state.ebrake_input > 0.0f) && (state.gas_input == 0.0f)) {
 			if ((UMath::Length(state.angular_vel) < 0.25f) && (!mCollisionBody->HasHadCollision())) {
 				if (state.speed < FLOAT_EPSILON) {
-					RigidBodyDamp(mRB, 1.0f);
+					mCollisionBody->Damp(1.0f);
 				} else {
-					RigidBodyDamp(mRB, 1.0f - state.speed);
+					mCollisionBody->Damp(1.0f - state.speed);
 				}
 				for (unsigned int i = 0; i < 4; ++i) {
 					GetIChassis()->SetWheelAngularVelocity(i, 0.0f);
@@ -1762,8 +1742,8 @@ SuspensionRacer::SleepState SuspensionRacer::DoSleep(const State &state) {
 		if ((UMath::Length(state.angular_vel) < 0.25f) && (state.gas_input <= 0.0f)) {
 			UMath::Vector3 v = state.local_vel;
 			UMath::Vector3 w = state.local_angular_vel;
-			UMath::Vector3 f = *mRB->GetForce();
-			UMath::Vector3 t = *mRB->GetTorque();
+			UMath::Vector3 f = *mCollisionBody->GetForce();
+			UMath::Vector3 t = *mCollisionBody->GetTorque();
 			irb->ConvertWorldToLocal(&f, false);
 			irb->ConvertWorldToLocal(&t, false);
 
@@ -1800,6 +1780,9 @@ void SuspensionRacer::OnTaskSimulate(float dT) {
 		return;
 	}
 
+	// todo does this work
+	mCollisionBody->SetInertiaTensor((UMath::Vector3*)mMWInfo->TENSOR_SCALE);
+
 	ISimable *owner = GetOwner();
 
 	float ride_extra = 0.0f;
@@ -1825,7 +1808,7 @@ void SuspensionRacer::OnTaskSimulate(float dT) {
 	if (mGameBreaker > 0.0f) {
 		UMath::Vector3 extra_df;
 		UMath::Scale(state.GetUpVector(), Tweak_GameBreakerExtraGs * mGameBreaker * state.mass * 9.81f, extra_df);
-		mRB->_ResolveForce(&extra_df);
+		mRB->ResolveForce(&extra_df);
 	}
 
 	float max_slip = ComputeMaxSlip(state);
@@ -1873,11 +1856,12 @@ void MWWheel::UpdateSurface(const Attrib::Collection* surface) {}
 
 bool MWWheel::InitPosition(ICollisionBody* cb, IRigidBody *rb, double maxcompression) {
 	//FUNCTION_LOG("Wheel::InitPosition");
-	auto mat = *rb->GetTransform();
+	UMath::Matrix4 mat;
+	rb->GetMatrix4(&mat);
 	mat.p = *rb->GetPosition();
 	UMath::Vector3 dim;
 	rb->GetDimension(&dim);
-	return UpdatePosition(*rb->GetAngularVelocity(), *rb->GetLinearVelocity(), mat, {0,0,0}, 0.0, maxcompression, false, cb->GetWCollider(), dim.y * 2.0);
+	return UpdatePosition(*rb->GetAngularVelocity(), *rb->GetLinearVelocity(), mat, {0,0,0}, 0.0, maxcompression, false, rb->GetWCollider(), dim.y * 2.0);
 }
 
 bool MWWheel::UpdatePosition(const UMath::Vector3 &body_av, const UMath::Vector3 &body_lv,
@@ -1900,9 +1884,8 @@ bool MWWheel::UpdatePosition(const UMath::Vector3 &body_av, const UMath::Vector3
 	float prev = vehicle_height * 0.5f;
 	mWorldPos.SetTolerance(UMath::Min(tolerance, prev));
 
-	bool result = WWorldPos::Update(&mWorldPos, &mPosition, &mNormal, IsOnGround() && usecache, collider, WWorldPos::kFail_KeepValid);
-	mNormal.w = -mWorldPos.fHeight;
-	UpdateSurface(mWorldPos.pSurface);
+	bool result = WWorldPos::Update(&mWorldPos, &mPosition, &mNormal, IsOnGround() && usecache, collider, true);
+	UpdateSurface(mWorldPos.fSurface);
 	return result;
 }
 
@@ -1937,7 +1920,7 @@ void SuspensionRacer::dtor(char a2) {
 		delete mTires[i];
 	}
 
-	dtor_simobject(this); // frees the interface list
+	//dtor_simobject(this); // todo frees the interface list
 
 	if ((a2 & 1) != 0) {
 		WriteLog("gFastMem.Free");
@@ -1974,7 +1957,8 @@ void SuspensionRacer::Reset() {
 
 	ISimable *owner = GetOwner();
 	IRigidBody *rigidBody = owner->GetRigidBody();
-	UMath::Vector3 vUp = *rigidBody->GetUpVector();
+	UMath::Vector3 vUp;
+	rigidBody->GetUpVector(&vUp);
 
 	unsigned int numonground = 0;
 	this->mGameBreaker = 0.0f;

@@ -35,7 +35,7 @@ namespace MWEngineDamage {
 	}
 
 	void* NewVTable[] = {
-			(void*)0x7B8560, // generic interface dtor
+			(void*)0x0, // dtor
 			(void*)&IsBlown,
 			(void*)&Blow,
 			(void*)&Sabotage,

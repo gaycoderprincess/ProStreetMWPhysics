@@ -107,9 +107,13 @@ public:
 	}
 
 	const SimSurface *GetSurface() const {
-		static SimSurface tmp = {};
-		memset(&tmp,0,sizeof(tmp));
-		return &tmp;
+		static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
+		surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));
+		return (SimSurface*)&surf;
+
+		//static SimSurface tmp = {};
+		//memset(&tmp,0,sizeof(tmp));
+		//return &tmp;
 	}
 
 	const UMath::Vector3 &GetVelocity() const {
@@ -222,15 +226,15 @@ public:
 		}
 
 	private:
-		int mState;          // offset 0x0, size 0x4
-		float mBurnOutTime;  // offset 0x4, size 0x4
-		float mTraction;     // offset 0x8, size 0x4
-		float mBurnOutAllow; // offset 0xC, size 0x4
+		int mState;
+		float mBurnOutTime;
+		float mTraction;
+		float mBurnOutAllow;
 	};
 
 	class Tire : public MWWheel {
 	public:
-		Tire(float radius, int index, const Attrib::Gen::car_tuning *specs, MWCarTuning* mwSpecs, IVehicle* vehicle)
+		Tire(float radius, int index, const Attrib::Gen::vehicle *specs, MWCarTuning* mwSpecs, IVehicle* vehicle)
 				: MWWheel(1), mRadius(UMath::Max(radius, 0.1f)), mWheelIndex(index), mAxleIndex(index >> 1), mSpecs(specs), mMWSpecs(mwSpecs), mVehicle(vehicle), mBrake(0.0f),
 				  mEBrake(0.0f), mAV(0.0f), mLoad(0.0f), mLateralForce(0.0f), mLongitudeForce(0.0f), mDriveTorque(0.0f), mBrakeTorque(0.0f), mLateralBoost(1.0f),
 				  mTractionBoost(1.0f), mSlip(0.0f), mLastTorque(0.0f), mRoadSpeed(0.0f), mAngularAcc(0.0f), mTraction(1.0f), mBottomOutTime(0.0f),
@@ -382,7 +386,7 @@ public:
 		const int mWheelIndex;
 		float mRoadSpeed;
 		const MWCarTuning *mMWSpecs;
-		const Attrib::Gen::car_tuning *mSpecs;
+		const Attrib::Gen::vehicle *mSpecs;
 		IVehicle *mVehicle;
 		float mAngularAcc;
 		const int mAxleIndex;
@@ -405,7 +409,7 @@ public:
 	float mJumpAlititude;
 	float mTireHeat;
 	MWCarTuning* mMWInfo;
-	Attrib::Gen::car_tuning mCarInfo;
+	Attrib::Gen::vehicle mCarInfo;
 	IEngine *mEngine;
 	IEngineDamage *mEngineDamage;
 	IInput *mInput;

@@ -1,5 +1,5 @@
 void* NewEngineRacerVTable[] = {
-		(void*)0x69F570, // generic OnService
+		(void*)0x579670, // generic OnService
 		(void*)&EngineRacer::dtor,
 		(void*)&EngineRacer::Reset,
 		(void*)&EngineRacer::GetPriority,
@@ -15,38 +15,10 @@ void* NewEngineRacerVTable[] = {
 		(void*)&EngineRacer::UseRevLimiter,
 		(void*)&EngineRacer::DoECU,
 		(void*)&EngineRacer::DoThrottle,
-		nullptr, //(void*)&EngineRacer::DoClutch,
-		nullptr, //(void*)&EngineRacer::DoClutchTorque,
-		nullptr, //(void*)&EngineRacer::ModifyClutchTorque,
-		nullptr, //(void*)&EngineRacer::FinalizeClutchTorque,
-		nullptr, //(void*)&EngineRacer::DoSabotage,
 		(void*)&EngineRacer::DoNos,
 		(void*)&EngineRacer::DoShifting,
 		(void*)&EngineRacer::UpdateShiftPotential,
-		nullptr, //(void*)&EngineRacer::ComputeDriveTorques,
-		nullptr, //(void*)&EngineRacer::ComputeBrakingTorque,
 		(void*)&EngineRacer::GetEngineTorque,
-		(void*)&EngineRacer::GetBrakingTorque,
-		(void*)&EngineRacer::GetShiftDelay,
-		(void*)&EngineRacer::GetDifferentialAngularVelocity,
-		nullptr, //(void*)&EngineRacer::GetTireTorque,
-		(void*)&EngineRacer::GetDriveWheelSlippage,
-		(void*)&EngineRacer::SetDifferentialAngularVelocity,
-		(void*)&EngineRacer::LimitFreeWheels,
-		nullptr, //(void*)&EngineRacer::LimitWheelsAV,
-		(void*)&EngineRacer::AutoShift,
-		(void*)&EngineRacer::CalcSpeedometer,
-		(void*)&EngineRacer::GetShiftUpRPM,
-		(void*)&EngineRacer::GetShiftDownRPM,
-		(void*)&EngineRacer::CalcShiftPoints,
-		nullptr, //(void*)&EngineRacer::TransmissionAVFromGroundSpeed,
-		(void*)&EngineRacer::GuessGear,
-		(void*)&EngineRacer::GuessRPM,
-		(void*)&EngineRacer::DoGearChange,
-		(void*)&EngineRacer::FindShiftPotential,
-		nullptr, //(void*)&EngineRacer::ComputeIdealDriveTorque,
-		nullptr, //(void*)&EngineRacer::GetTargetTorqueRatioMultiplier,
-		nullptr, //(void*)&EngineRacer::CalcPerfectLaunchError,
 };
 
 void EngineRacer::Create(const BehaviorParams &bp) {
@@ -93,7 +65,7 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 	mIInput = nullptr;
 	mSuspension = nullptr;
 
-	ctor_cartuning(&mCarInfo, cartuning_LookupKey(&mCarInfo, GetOwner(), 0));
+	ctor_cartuning(&mCarInfo, cartuning_LookupKey(GetOwner()));
 
 	mMWInfo = new MWCarTuning;
 	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
@@ -137,7 +109,7 @@ void EngineRacer::dtor(char a2) {
 	//	Attrib::Collection::Release(mCarInfo.mCollection, 0);
 	//}
 
-	dtor_simobject(this); // frees the interface list
+	//dtor_simobject(this); // todo frees the interface list
 
 	if ((a2 & 1) != 0) {
 		WriteLog("gFastMem.Free");
