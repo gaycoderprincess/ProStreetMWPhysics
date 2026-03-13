@@ -66,6 +66,8 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 	mSuspension = nullptr;
 
 	ctor_cartuning(&mCarInfo, cartuning_LookupKey(GetOwner()));
+	//ctor_cartuning(&mCarInfo, GetOwner()->GetAttributes()->mCollection->mKey);
+	//mCarInfo.mCollection = GetOwner()->GetAttributes()->mCollection;
 
 	mMWInfo = new MWCarTuning;
 	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());

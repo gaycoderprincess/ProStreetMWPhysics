@@ -74,7 +74,7 @@ namespace MWInductable {
 	}
 
 	void* NewVTable[] = {
-			(void*)0x0, // dtor
+			(void*)0xDEADBEEF, // dtor
 			(void*)&GetInductionType,
 			(void*)&GetSpool,
 			(void*)&GetCurrentPSI,

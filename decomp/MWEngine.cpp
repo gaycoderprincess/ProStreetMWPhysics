@@ -177,9 +177,12 @@ namespace MWEngine {
 		auto pThis = GetEngineRacer(ptr);
 		return pThis->GetShiftPoint(pThis->GetGear(), gear) + 50.0;
 	}
+	void __thiscall unknown(uintptr_t ptr, Attrib::Collection* collection) {
+		IENGINE_FUNCTION_LOG("unknown");
+	}
 
 	void* NewVTable[] = {
-			(void*)0x0, // dtor
+			(void*)0xDEADBEEF, // dtor
 			(void*)&GetRPM,
 			(void*)&GetEngineBogRPM,
 			(void*)&GetRedline,
@@ -198,6 +201,7 @@ namespace MWEngine {
 			(void*)&HasNOS,
 			(void*)&ChargeNOS,
 			(void*)&GetNOSNumStages,
+			(void*)&unknown,
 			(void*)&GetMaxHorsePower,
 			(void*)&GetMinHorsePower,
 			(void*)&GetHorsePower,

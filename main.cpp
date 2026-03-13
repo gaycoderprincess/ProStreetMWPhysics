@@ -53,7 +53,7 @@ public:
 #include "decomp/ConversionUtil.hpp"
 
 auto cartuning_LookupKey = (uint32_t(__thiscall*)(const ISimable*))0x49D000;
-auto ctor_cartuning = (void(__thiscall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD50;
+auto ctor_cartuning = (void(__stdcall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD50;
 
 #define FLOAT_EPSILON 0.000001f
 
@@ -339,23 +339,25 @@ void DebugMenu() {
 		if (pEngine) {
 			auto ply = VEHICLE_LIST::GetList(VEHICLE_PLAYERS)[0];
 
-			// engine -1.0 1.0 tune 2, -1 torque 1 horsepower
-			// suspension -1.0 1.0 tune 3, -1 soft 1 stiff
-			// drivetrain -1.0 1.0 tune 1, -1 accel 1 top speed
-			// tires -1.0 1.0 tune 4, -1 loose 1 grip
-			// nitrous -1.0 1.0 tune 0, -1 strength 1 duration
+			if (auto cust = ply->GetCustomizations()) {
+				// engine -1.0 1.0 tune 2, -1 torque 1 horsepower
+				// suspension -1.0 1.0 tune 3, -1 soft 1 stiff
+				// drivetrain -1.0 1.0 tune 1, -1 accel 1 top speed
+				// tires -1.0 1.0 tune 4, -1 loose 1 grip
+				// nitrous -1.0 1.0 tune 0, -1 strength 1 duration
 
-			for (int i = 0; i < 32; i++) {
-				DrawMenuOption(std::format("tune {} {:.2f}", i, ply->GetCustomizations()->PhysicsTuning[i]));
+				for (int i = 0; i < 32; i++) {
+					DrawMenuOption(std::format("tune {} {:.2f}", i, ply->GetCustomizations()->PhysicsTuning[i]));
+				}
+
+				//DrawMenuOption(std::format("CARSLOTID_BRAKE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_BRAKE_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_DRIVETRAIN_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_ENGINE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_ENGINE_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_FORCED_INDUCTION_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_NITROUS_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_NITROUS_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_SUSPENSION_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE]));
+				DrawMenuOption(std::format("CARSLOTID_TIRE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_TIRE_PACKAGE]));
 			}
-
-			//DrawMenuOption(std::format("CARSLOTID_BRAKE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_BRAKE_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_DRIVETRAIN_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_ENGINE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_ENGINE_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_FORCED_INDUCTION_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_NITROUS_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_NITROUS_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_SUSPENSION_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE]));
-			DrawMenuOption(std::format("CARSLOTID_TIRE_PACKAGE {}", ply->GetCustomizations()->InstalledParts[CARSLOTID_TIRE_PACKAGE]));
 
 			DrawMenuOption(std::format("pEngine {:X}", (uintptr_t)pEngine));
 			DrawMenuOption(std::format("ITransmission {:X}", (uintptr_t)pEngine->GetITransmission()));
@@ -397,6 +399,16 @@ void DebugMenu() {
 			}
 		}
 		DrawMenuOption(std::format("steer_type {}", (int)steer_type));
+
+		DrawMenuOption(std::format("RIM_SIZE.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->RIM_SIZE.Front));
+		DrawMenuOption(std::format("RIM_SIZE.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->RIM_SIZE.Rear));
+		DrawMenuOption(std::format("WHEEL_BASE {:.2f}", pSuspension->mCarInfo.GetLayout()->WHEEL_BASE));
+		DrawMenuOption(std::format("TRACK_WIDTH.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->TRACK_WIDTH.Front));
+		DrawMenuOption(std::format("TRACK_WIDTH.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->TRACK_WIDTH.Rear));
+		DrawMenuOption(std::format("SECTION_WIDTH.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->SECTION_WIDTH.Front));
+		DrawMenuOption(std::format("SECTION_WIDTH.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->SECTION_WIDTH.Rear));
+		DrawMenuOption(std::format("FRONT_AXLE {:.2f}", pSuspension->mCarInfo.GetLayout()->FRONT_AXLE));
+		DrawMenuOption(std::format("Layout {:X}", (uintptr_t)pSuspension->mCarInfo.GetLayout()));
 
 		if (auto veh = VEHICLE_LIST::GetList(VEHICLE_PLAYERS)[0]) {
 			DrawMenuOption(std::format("state.speed {:.2f}", LastChassisState.speed));
@@ -522,6 +534,29 @@ void AssistLoop() {
 	}
 }
 
+// it's supposed to be 2085.71, 8257.07, 511.35
+// from inertia tensor 1.0, 3.5, 1.0, mass 1280
+
+std::vector<Attrib::Collection*> FindCollectionAndAllChildren(const char* className, const char* name) {
+	std::vector<Attrib::Collection*> out;
+
+	auto parent = Attrib::FindCollection(Attrib::StringHash32(className), Attrib::StringHash32(name));
+	if (!parent) return out;
+	out.push_back(parent);
+
+	auto pClass = Attrib::Database::sThis->GetClass(Attrib::StringHash32(className));
+	auto collHash = pClass->GetFirstCollection();
+	while (collHash) {
+		auto childCollection = Attrib::FindCollection(Attrib::StringHash32(className), collHash);
+		if (childCollection->mParent == parent) {
+			out.push_back(childCollection);
+		}
+		collHash = pClass->GetNextCollection(collHash);
+	}
+
+	return out;
+}
+
 UCrc32* __thiscall LookupBehaviorSignatureHooked(PVehicle* pThis, UCrc32* result, const Attrib::StringKey* mechanic) {
 	if (pThis->mDriverClass == DRIVER_HUMAN) {
 		if (mechanic == &BEHAVIOR_MECHANIC_ENGINE) {
@@ -547,7 +582,32 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 			GetCurrentDirectoryW(MAX_PATH, gDLLDir);
 
 			NyaHooks::LateInitHook::Init();
-			NyaHooks::LateInitHook::aFunctions.push_back([](){ RegisterNewBehaviors(); });
+			NyaHooks::LateInitHook::aFunctions.push_back([](){
+				RegisterNewBehaviors();
+
+				DLLDirSetter _setdir;
+
+				for (const auto& entry : std::filesystem::directory_iterator("CarDataDump")) {
+					if (entry.is_directory()) continue;
+
+					auto filename = entry.path().filename().string();
+					if (!filename.ends_with(".conf")) continue;
+
+					auto tuning = LoadCarTuningFromFile(filename);
+					if (!tuning) {
+						WriteLog(std::format("Failed to load {}", filename));
+						continue;
+					}
+
+					auto collections = FindCollectionAndAllChildren("vehicle", tuning->carName.c_str());
+					for (auto collection : collections) {
+						auto f = (float*)Attrib::Collection::GetData(collection, Attrib::StringHash32("TENSOR_SCALE"), 0);
+						f[0] = tuning->TENSOR_SCALE[0];
+						f[1] = tuning->TENSOR_SCALE[1];
+						f[2] = tuning->TENSOR_SCALE[2];
+					}
+				}
+			});
 			NyaHooks::WorldServiceHook::Init();
 			NyaHooks::WorldServiceHook::aPreFunctions.push_back(AssistLoop);
 
@@ -558,6 +618,13 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 			// AIVehicle::GetOverSteerCorrection, disable road surface getter during race cutscenes
 			//NyaHookLib::Patch<uint16_t>(0x40AFE9, 0x9090);
+
+			NyaHooks::SkipFEFixes::Init();
+
+			SkipFE = true;
+			SkipFEForever = true;
+			SkipFEPlayerCar = "rx7";
+			SkipFETrackNumber = 6000;
 
 			WriteLog("Mod initialized");
 		} break;

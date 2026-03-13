@@ -473,6 +473,8 @@ void SuspensionRacer::Create(const BehaviorParams& bp) {
 	mTireHeat = 0.0f;
 
 	ctor_cartuning(&mCarInfo, cartuning_LookupKey(GetOwner()));
+	//ctor_cartuning(&mCarInfo, GetOwner()->GetAttributes()->mCollection->mKey);
+	//mCarInfo.mLayoutPtr = GetOwner()->GetAttributes()->mLayoutPtr;
 	
 	mMWInfo = new MWCarTuning;
 	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
@@ -1779,9 +1781,6 @@ void SuspensionRacer::OnTaskSimulate(float dT) {
 		WriteLog("OnTaskSimulate early exit");
 		return;
 	}
-
-	// todo does this work
-	mCollisionBody->SetInertiaTensor((UMath::Vector3*)mMWInfo->TENSOR_SCALE);
 
 	ISimable *owner = GetOwner();
 

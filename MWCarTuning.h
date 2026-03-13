@@ -196,22 +196,24 @@ MWCarTuning* LoadCarTuningFromFile(std::string configCarName) {
 	return &aCarTunings[aCarTunings.size()-1];
 }
 
-MWCarTuning* GetCarTuning(const std::string& model) {
+int GetCarTuning(const std::string& model) {
 	for (auto& tuning : aCarTunings) {
-		if (tuning.carName == model) return &tuning;
+		if (tuning.carName == model) return &tuning - &aCarTunings[0];
 	}
 	if (auto tuning = LoadCarTuningFromFile(model)) {
-		return tuning;
+		return aCarTunings.size()-1;
 	}
 	WriteLog(std::format("Failed to find tunings for {}", model));
-	return nullptr;
+	return -1;
 }
 
 #define TUNED_VALUE(value, delta) tmp.value = std::lerp(base->value, top->value, delta);
 
 void GetLerpedCarTuning(MWCarTuning& tmp, const std::string& model, float brake, float drivetrain, float engine, float induction, float nitro, float suspension, float tire) {
-	auto base = GetCarTuning(model);
-	auto top = GetCarTuning(model + "_top");
+	auto baseId = GetCarTuning(model);
+	auto topId = GetCarTuning(model + "_top");
+	auto base = baseId >= 0 ? &aCarTunings[baseId] : nullptr;
+	auto top = topId >= 0 ? &aCarTunings[topId] : nullptr;
 	if (!top && !base) {
 		MessageBoxA(nullptr, std::format("Failed to find tunings for {}", model).c_str(), "nya?!~", MB_ICONERROR);
 		__debugbreak();
