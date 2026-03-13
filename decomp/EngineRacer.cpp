@@ -89,6 +89,8 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 	}
 
 	Reset();
+
+	WriteLog("EngineRacer::Create finished");
 }
 
 void EngineRacer::dtor(char a2) {

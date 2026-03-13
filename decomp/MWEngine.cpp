@@ -4,6 +4,33 @@ namespace MWEngine {
 		return (EngineRacer*)ptr;
 	}
 
+	float __thiscall GetRPM(uintptr_t ptr);
+	float __thiscall GetEngineBogRPM(uintptr_t ptr);
+	float __thiscall GetRedline(uintptr_t ptr);
+	float __thiscall GetMaxRPM(uintptr_t ptr);
+	float __thiscall GetMinRPM(uintptr_t ptr);
+	float __thiscall GetPeakTorqueRPM(uintptr_t ptr);
+	float __thiscall GetPerfectShiftMinRPM(uintptr_t ptr, GearID);
+	float __thiscall GetPerfectShiftMaxRPM(uintptr_t ptr, GearID);
+	float __thiscall GetTorqueRatio(uintptr_t ptr);
+	void __thiscall MatchSpeed(uintptr_t ptr, float);
+	float __thiscall GetNOSCapacity(uintptr_t ptr);
+	bool __thiscall IsNOSEngaged(uintptr_t ptr);
+	float __thiscall GetNOSPressure(uintptr_t ptr);
+	float __thiscall GetNOSFlowRate(uintptr_t ptr);
+	float __thiscall GetNOSBoost(uintptr_t ptr);
+	bool __thiscall HasNOS(uintptr_t ptr);
+	void __thiscall ChargeNOS(uintptr_t ptr);
+	int __thiscall GetNOSNumStages(uintptr_t ptr);
+	float __thiscall GetMaxHorsePower(uintptr_t ptr);
+	float __thiscall GetMinHorsePower(uintptr_t ptr);
+	float __thiscall GetHorsePower(uintptr_t ptr);
+	float __thiscall GetThrottle(uintptr_t ptr);
+	bool __thiscall IsTractionControlOn(uintptr_t ptr);
+	int __thiscall GetTractionControlLevel(uintptr_t ptr);
+	void __thiscall SetTractionControlLevel(uintptr_t ptr, int);
+	float __thiscall GetEngineTemperature(uintptr_t ptr);
+
 	float __thiscall GetRPM(uintptr_t ptr) {
 		IENGINE_FUNCTION_LOG("GetRPM");
 		auto pThis = GetEngineRacer(ptr);
@@ -80,10 +107,10 @@ namespace MWEngine {
 		//return pThis->mNOSCapacity > 0.0;
 		return true; // is this the delay for nos usage at the start of a race?
 	}
-	void __thiscall ChargeNOS(uintptr_t ptr, float charge) {
+	void __thiscall ChargeNOS(uintptr_t ptr) {
 		IENGINE_FUNCTION_LOG("ChargeNOS");
 		auto pThis = GetEngineRacer(ptr);
-		return pThis->ChargeNOS(charge);
+		return pThis->ChargeNOS(1.0);
 	}
 	float __thiscall GetMaxHorsePower(uintptr_t ptr) {
 		IENGINE_FUNCTION_LOG("GetMaxHorsePower");
@@ -130,6 +157,26 @@ namespace MWEngine {
 		auto pThis = GetEngineRacer(ptr);
 		return pThis->mPeakTorque;
 	}
+	float __thiscall GetNOSPressure(uintptr_t ptr) { // todo?
+		IENGINE_FUNCTION_LOG("GetNOSPressure");
+		auto pThis = GetEngineRacer(ptr);
+		return 1.0;
+	}
+	int __thiscall GetNOSNumStages(uintptr_t ptr) { // todo?
+		IENGINE_FUNCTION_LOG("GetNOSNumStages");
+		auto pThis = GetEngineRacer(ptr);
+		return 1;
+	}
+	float __thiscall GetPerfectShiftMinRPM(uintptr_t ptr, GearID gear) { // todo
+		IENGINE_FUNCTION_LOG("GetPerfectShiftMinRPM");
+		auto pThis = GetEngineRacer(ptr);
+		return pThis->GetShiftPoint(pThis->GetGear(), gear) - 50.0;
+	}
+	float __thiscall GetPerfectShiftMaxRPM(uintptr_t ptr, GearID gear) { // todo
+		IENGINE_FUNCTION_LOG("GetPerfectShiftMaxRPM");
+		auto pThis = GetEngineRacer(ptr);
+		return pThis->GetShiftPoint(pThis->GetGear(), gear) + 50.0;
+	}
 
 	void* NewVTable[] = {
 			(void*)0x0, // dtor
@@ -139,16 +186,18 @@ namespace MWEngine {
 			(void*)&GetMaxRPM,
 			(void*)&GetMinRPM,
 			(void*)&GetPeakTorqueRPM,
+			(void*)&GetPerfectShiftMinRPM,
+			(void*)&GetPerfectShiftMaxRPM,
 			(void*)&GetTorqueRatio,
 			(void*)&MatchSpeed,
 			(void*)&GetNOSCapacity,
-			(void*)&SetNOSCapacity,
 			(void*)&IsNOSEngaged,
+			(void*)&GetNOSPressure,
 			(void*)&GetNOSFlowRate,
 			(void*)&GetNOSBoost,
 			(void*)&HasNOS,
-			(void*)&CanUseNOS,
 			(void*)&ChargeNOS,
+			(void*)&GetNOSNumStages,
 			(void*)&GetMaxHorsePower,
 			(void*)&GetMinHorsePower,
 			(void*)&GetHorsePower,
@@ -157,6 +206,5 @@ namespace MWEngine {
 			(void*)&GetTractionControlLevel,
 			(void*)&SetTractionControlLevel,
 			(void*)&GetEngineTemperature,
-			(void*)&GetPeakTorque,
 	};
 }

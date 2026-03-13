@@ -4,106 +4,8 @@ namespace MWChassis {
 		return (SuspensionRacer*)ptr;
 	}
 
-	// calls in one frame:
-	// IChassis::GetCompression called from 619569
-	// IChassis::GetCompression called from 619578
-	// IChassis::GetCompression called from 619587
-	// IChassis::GetCompression called from 619599
-	// IChassis::GetNumWheels called from 700823
-	// IChassis::GetNumWheels called from 700902
-	// IChassis::GetNumWheels called from 70AADC
-	// IChassis::GetNumWheels called from 72D97A - don't run EngineRacer code if wheel count isn't 4
-	// IChassis::GetNumWheels called from 7BA907
-	// IChassis::GetNumWheels called from 7BAA0F
-	// IChassis::GetNumWheelsOnGround called from 6F0F0E
-	// IChassis::GetNumWheelsOnGround called from 7011CD
-	// IChassis::GetNumWheelsOnGround called from 7013AE
-	// IChassis::GetNumWheelsOnGround called from 70AAD1
-	// IChassis::GetNumWheelsOnGround called from 720AFF
-	// IChassis::GetNumWheelsOnGround called from 72D6CE
-	// IChassis::GetNumWheelsOnGround called from 72DA0C
-	// IChassis::GetSuspensionDigression called from 6195AE
-	// IChassis::GetSuspensionDigression called from 6195C3
-	// IChassis::GetSuspensionDigression called from 6195D8
-	// IChassis::GetSuspensionDigression called from 6195ED
-	// IChassis::GetWheelAngularVelocity called from 700270
-	// IChassis::GetWheelAngularVelocity called from 700283
-	// IChassis::GetWheelAngularVelocity called from 700316
-	// IChassis::GetWheelAngularVelocity called from 700329
-	// IChassis::GetWheelAngularVelocity called from 700555
-	// IChassis::GetWheelAngularVelocity called from 700568
-	// IChassis::GetWheelAngularVelocity called from 70065D
-	// IChassis::GetWheelAngularVelocity called from 700670
-	// IChassis::GetWheelAngularVelocity called from 730F61
-	// IChassis::GetWheelAngularVelocity called from 730F70
-	// IChassis::GetWheelAngularVelocity called from 730F83
-	// IChassis::GetWheelAngularVelocity called from 730F96
-	// IChassis::GetWheelBrakeTorque called from 7017A6
-	// IChassis::GetWheelBrakeTorque called from 7017C1
-	// IChassis::GetWheelBrakeTorque called from 70182B
-	// IChassis::GetWheelBrakeTorque called from 701846
-	// IChassis::GetWheelIdealTorque called from 70176F
-	// IChassis::GetWheelIdealTorque called from 701785
-	// IChassis::GetWheelIdealTorque called from 7017F6
-	// IChassis::GetWheelIdealTorque called from 70180C
-	// IChassis::GetWheelieAngle called from 61944A
-	// IChassis::GetWheelLoad called from 619469
-	// IChassis::GetWheelLoad called from 61947C
-	// IChassis::GetWheelLoad called from 61948F
-	// IChassis::GetWheelLoad called from 6194A2
-	// IChassis::GetWheelRoadSurface called from 428F45
-	// IChassis::GetWheelRoadSurface called from 428F66
-	// IChassis::GetWheelRoadSurface called from 428F84
-	// IChassis::GetWheelRoadSurface called from 428FA2
-	// IChassis::GetWheelRoadSurface called from 7BA977
-	// IChassis::GetWheelSkid called from 7BA9BB
-	// IChassis::GetWheelSlip called from 61952D
-	// IChassis::GetWheelSlip called from 61953C
-	// IChassis::GetWheelSlip called from 61954B
-	// IChassis::GetWheelSlip called from 61955A
-	// IChassis::GetWheelSlip called from 700425
-	// IChassis::GetWheelSlip called from 700438
-	// IChassis::GetWheelSlip called from 700471
-	// IChassis::GetWheelSlip called from 700484
-	// IChassis::GetWheelSlip called from 7BA9AF
-	// IChassis::GetWheelSlipAngle called from 6194F1
-	// IChassis::GetWheelSlipAngle called from 619500
-	// IChassis::GetWheelSlipAngle called from 61950F
-	// IChassis::GetWheelSlipAngle called from 61951E
-	// IChassis::GetWheelSlipRatio called from 6194B5
-	// IChassis::GetWheelSlipRatio called from 6194C4
-	// IChassis::GetWheelSlipRatio called from 6194D3
-	// IChassis::GetWheelSlipRatio called from 6194E2
-	// IChassis::GetWheelSlipRatio called from 730F13
-	// IChassis::GetWheelSlipRatio called from 730F22
-	// IChassis::GetWheelSlipRatio called from 730F35
-	// IChassis::GetWheelSlipRatio called from 730F48
-	// IChassis::GetWheelTraction called from 719550 - EngineRacer::DoThrottle
-	// IChassis::GetWheelTraction called from 719563 - EngineRacer::DoThrottle
-	// IChassis::GetWheelTraction called from 71957A - EngineRacer::DoThrottle
-	// IChassis::GetWheelTraction called from 719591 - EngineRacer::DoThrottle
-	// IChassis::IsCounterSteering called from 72DEC3
-	// IChassis::IsStaticResetCondition called from 43416C - AIVehicleHuman::OnTaskSimulate, resets the car if needed
-	// IChassis::IsWheelOnGround called from 428EF9
-	// IChassis::IsWheelOnGround called from 428F0C
-	// IChassis::IsWheelOnGround called from 428F1F
-	// IChassis::IsWheelOnGround called from 428F32
-	// IChassis::IsWheelOnGround called from 70052A
-	// IChassis::IsWheelOnGround called from 700632
-	// IChassis::IsWheelOnGround called from 70083E
-	// IChassis::IsWheelOnGround called from 7BA940
-	// IChassis::SetWheelAngularVelocity called from 7005C7
-	// IChassis::SetWheelAngularVelocity called from 7005F0
-	// IChassis::SetWheelAngularVelocity called from 7006CF
-	// IChassis::SetWheelAngularVelocity called from 7006F8
-	// IChassis::SetWheelMaxAngularVelocity called from 70093D
-	// IChassis::SetWheelMaximumTorqueRatio called from 72DD70
-	// IChassis::SetWheelMaximumTorqueRatio called from 72DD89
-	// IChassis::SetWheelMaximumTorqueRatio called from 72DDA3
-	// IChassis::SetWheelMaximumTorqueRatio called from 72DDBD
-
-	const char *__thiscall GetChassisName(uintptr_t ptr);
 	float __thiscall GetWheelTraction(uintptr_t ptr, unsigned int);
+	float __thiscall GetWheelDynamicSlipAngle(uintptr_t ptr, unsigned int);
 	float __thiscall GetWheelSlipRatio(uintptr_t ptr, unsigned int);
 	float __thiscall GetDragBoost(uintptr_t ptr);
 	unsigned int __thiscall GetNumWheels(uintptr_t ptr);
@@ -116,15 +18,13 @@ namespace MWChassis {
 	float __thiscall GetWheelRoadHeight(uintptr_t ptr, unsigned int);
 	bool __thiscall IsWheelOnGround(uintptr_t ptr, unsigned int);
 	float __thiscall GetCompression(uintptr_t ptr, unsigned int);
-	float __thiscall GetSuspensionMaxTravel(uintptr_t ptr, unsigned int);
 	float __thiscall GuessCompression(uintptr_t ptr, unsigned int, float);
 	void __thiscall ForceCompression(uintptr_t ptr, unsigned int, float);
-	void __thiscall DecompressShocks(uintptr_t ptr);
 	float __thiscall GetWheelSlip(uintptr_t ptr, unsigned int);
 	float __thiscall GetToleratedSlip(uintptr_t ptr, unsigned int);
 	float __thiscall GetWheelSkid(uintptr_t ptr, unsigned int);
 	float __thiscall GetWheelSlipAngle(uintptr_t ptr, unsigned int);
-	const UMath::Vector3 *__thiscall GetWheelRoadNormal(uintptr_t ptr, unsigned int);
+	const UMath::Vector4 *__thiscall GetWheelRoadNormal(uintptr_t ptr, unsigned int);
 	const SimSurface *__thiscall GetWheelRoadSurface(uintptr_t ptr, unsigned int);
 	const UMath::Vector3 *__thiscall GetWheelVelocity(uintptr_t ptr, unsigned int);
 	int __thiscall GetNumWheelsOnGround(uintptr_t ptr);
@@ -136,10 +36,12 @@ namespace MWChassis {
 	bool __thiscall CalculateFFBSteeringState(uintptr_t ptr, FFBSteeringState *);
 	float __thiscall GetSuspensionDigression(uintptr_t ptr, unsigned int);
 	float __thiscall GetWheelLateralForce(uintptr_t ptr, unsigned int);
+	float __thiscall CalculateUndersteerFactor(uintptr_t ptr);
+	float __thiscall CalculateOversteerFactor(uintptr_t ptr);
 	float __thiscall GetRideHeight(uintptr_t ptr, unsigned int);
 	float __thiscall GetWheelRadius(uintptr_t ptr, unsigned int);
 	float __thiscall GetMaxSteering(uintptr_t ptr);
-	void __thiscall MatchSpeed(uintptr_t ptr, float, bool);
+	void __thiscall MatchSpeed(uintptr_t ptr, float);
 	float __thiscall GetDriveshaftTorqueEffect(uintptr_t ptr);
 	float __thiscall GetRenderMotion(uintptr_t ptr);
 	ISteeringWheel::SteeringType __thiscall GetSteeringType(uintptr_t ptr);
@@ -171,17 +73,21 @@ namespace MWChassis {
 	bool __thiscall IsBrakingAssistOn(uintptr_t ptr);
 	int __thiscall GetBrakingAssistLevel(uintptr_t ptr);
 	void __thiscall SetBrakingAssistLevel(uintptr_t ptr, int);
+	float __thiscall GetWheelEdgeOfControlSlipAngleLow(uintptr_t ptr, int);
+	float __thiscall GetWheelEdgeOfControlSlipAngleHigh(uintptr_t ptr, int);
+	float __thiscall GetWheelToleratedSlipRatio(uintptr_t ptr, int);
+	float __thiscall GetWheelPeakLongForceSlipRatio(uintptr_t ptr, int);
 	float __thiscall GetDragCoefficient(uintptr_t ptr);
 	float __thiscall GetDownCoefficient(uintptr_t ptr);
 	float __thiscall GetStaticGripForSpeed(uintptr_t ptr, float);
 	void __thiscall SetClutchKickExtraTireSpin(uintptr_t ptr, float);
+	float __thiscall GetHydraulicsCompression(uintptr_t ptr, unsigned int);
+	void __thiscall ChangeSlot(uintptr_t ptr, bool);
+	bool __thiscall IsSlotCar(uintptr_t ptr);
 	float __thiscall GetWheelieAngle(uintptr_t ptr);
 	bool __thiscall IsStaticResetCondition(uintptr_t ptr);
+	void __thiscall SetWindCondition(uintptr_t ptr, float, float, float);
 	void __thiscall SetAICatchOverride(uintptr_t ptr, bool);
-	float __thiscall GetSlipToGripImpactTime(uintptr_t ptr);
-	float __thiscall GetJumpTime(uintptr_t ptr);
-	float __thiscall GetTimeFromLanding(uintptr_t ptr);
-	bool __thiscall IsCounterSteering(uintptr_t ptr);
 
 	const char* __thiscall GetChassisName(uintptr_t ptr) { return "ChassisHuman"; }
 	float __thiscall GetWheelTraction(uintptr_t ptr, unsigned int index) {
@@ -189,10 +95,26 @@ namespace MWChassis {
 		auto pThis = GetSuspensionRacer(ptr);
 		return pThis->mTires[index]->GetTraction();
 	}
+	float __thiscall GetWheelDynamicSlipAngle(uintptr_t ptr, unsigned int index) { // todo what is this
+		ICHASSIS_FUNCTION_LOG("GetWheelDynamicSlipAngle");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->mTires[index]->GetSlipAngle();
+	}
 	float __thiscall GetWheelSlipRatio(uintptr_t ptr, unsigned int index) { // todo this is weird
 		ICHASSIS_FUNCTION_LOG("GetWheelSlipRatio");
 		auto pThis = GetSuspensionRacer(ptr);
-		return 1.0 - pThis->mTires[index]->GetTraction();
+		//return 1.0 - pThis->mTires[index]->GetTraction();
+		return pThis->mTires[index]->GetCurrentSlip();
+	}
+	float __thiscall GetWheelToleratedSlipRatio(uintptr_t ptr, int index) {
+		ICHASSIS_FUNCTION_LOG("GetWheelToleratedSlipRatio");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->mTires[index]->GetToleratedSlip();
+	}
+	float __thiscall GetWheelPeakLongForceSlipRatio(uintptr_t ptr, int index) { // ??????
+		ICHASSIS_FUNCTION_LOG("GetWheelPeakLongForceSlipRatio");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->mTires[index]->GetToleratedSlip();
 	}
 	float __thiscall GetDragBoost(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetDragBoost");
@@ -301,10 +223,20 @@ namespace MWChassis {
 		auto pThis = GetSuspensionRacer(ptr);
 		return pThis->GetWheelSlipAngle(id);
 	}
-	const UMath::Vector3* __thiscall GetWheelRoadNormal(uintptr_t ptr, unsigned int id) {
+	float __thiscall GetWheelEdgeOfControlSlipAngleLow(uintptr_t ptr, int id) { // ????
+		ICHASSIS_FUNCTION_LOG("GetWheelEdgeOfControlSlipAngleLow");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->GetWheelSlipAngle(id);
+	}
+	float __thiscall GetWheelEdgeOfControlSlipAngleHigh(uintptr_t ptr, int id) { // ????
+		ICHASSIS_FUNCTION_LOG("GetWheelEdgeOfControlSlipAngleHigh");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->GetWheelSlipAngle(id);
+	}
+	const UMath::Vector4* __thiscall GetWheelRoadNormal(uintptr_t ptr, unsigned int id) {
 		ICHASSIS_FUNCTION_LOG("GetWheelRoadNormal");
 		auto pThis = GetSuspensionRacer(ptr);
-		return (UMath::Vector3*)&pThis->GetWheelRoadNormal(id);
+		return &pThis->GetWheelRoadNormal(id);
 	}
 	const SimSurface* __thiscall GetWheelRoadSurface(uintptr_t ptr, unsigned int id) {
 		ICHASSIS_FUNCTION_LOG("GetWheelRoadSurface");
@@ -388,7 +320,7 @@ namespace MWChassis {
 		auto pThis = GetSuspensionRacer(ptr);
 		return pThis->GetMaxSteering();
 	}
-	void __thiscall MatchSpeed(uintptr_t ptr, float speed, bool for_nis) {
+	void __thiscall MatchSpeed(uintptr_t ptr, float speed) {
 		ICHASSIS_FUNCTION_LOG("MatchSpeed");
 		auto pThis = GetSuspensionRacer(ptr);
 		pThis->MatchSpeed(speed);
@@ -522,35 +454,60 @@ namespace MWChassis {
 		auto pThis = GetSuspensionRacer(ptr);
 		return false;
 	}
+	float __thiscall CalculateUndersteerFactor(uintptr_t ptr) {
+		ICHASSIS_FUNCTION_LOG("CalculateUndersteerFactor");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->CalculateUndersteerFactor();
+	}
+	float __thiscall CalculateOversteerFactor(uintptr_t ptr) {
+		ICHASSIS_FUNCTION_LOG("CalculateOversteerFactor");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->CalculateOversteerFactor();
+	}
+	void __thiscall SetWindCondition(uintptr_t ptr, float, float, float) {
+		ICHASSIS_FUNCTION_LOG("SetWindCondition");
+		auto pThis = GetSuspensionRacer(ptr);
+	}
+	bool __thiscall IsSlotCar(uintptr_t ptr) { // todo
+		ICHASSIS_FUNCTION_LOG("IsSlotCar");
+		auto pThis = GetSuspensionRacer(ptr);
+		return false;
+	}
+	void __thiscall ChangeSlot(uintptr_t ptr, bool) { // todo
+		ICHASSIS_FUNCTION_LOG("ChangeSlot");
+		auto pThis = GetSuspensionRacer(ptr);
+	}
+	float __thiscall GetHydraulicsCompression(uintptr_t ptr, unsigned int i) { // todo
+		ICHASSIS_FUNCTION_LOG("GetHydraulicsCompression");
+		auto pThis = GetSuspensionRacer(ptr);
+		return pThis->mTires[i]->GetCompression();
+	}
 
 	void* NewVTable[] = {
 			(void*)0x0, // dtor
-			(void*)&GetChassisName,
 			(void*)&GetWheelTraction,
-			//(void*)&GetWheelDynamicSlipAngle,
+			(void*)&GetWheelDynamicSlipAngle,
 			(void*)&GetWheelSlipRatio,
 			(void*)&GetDragBoost,
 			(void*)&GetNumWheels,
-			(void*)&GetWheelPos,
-			(void*)&GetWheelLocalPos,
-			(void*)&GetWheelCenterPos,
+			(void*)&*GetWheelPos,
+			(void*)&*GetWheelLocalPos,
+			(void*)&*GetWheelCenterPos,
 			(void*)&GetWheelTorque,
 			(void*)&GetWheelBrakeTorque,
 			(void*)&GetWheelLoad,
 			(void*)&GetWheelRoadHeight,
 			(void*)&IsWheelOnGround,
 			(void*)&GetCompression,
-			(void*)&GetSuspensionMaxTravel,
 			(void*)&GuessCompression,
 			(void*)&ForceCompression,
-			(void*)&DecompressShocks,
 			(void*)&GetWheelSlip,
 			(void*)&GetToleratedSlip,
 			(void*)&GetWheelSkid,
 			(void*)&GetWheelSlipAngle,
-			(void*)&GetWheelRoadNormal,
-			(void*)&GetWheelRoadSurface,
-			(void*)&GetWheelVelocity,
+			(void*)&*GetWheelRoadNormal,
+			(void*)&*GetWheelRoadSurface,
+			(void*)&*GetWheelVelocity,
 			(void*)&GetNumWheelsOnGround,
 			(void*)&GetNumWheelsOnBand,
 			(void*)&GetWheelAngularVelocity,
@@ -560,6 +517,8 @@ namespace MWChassis {
 			(void*)&CalculateFFBSteeringState,
 			(void*)&GetSuspensionDigression,
 			(void*)&GetWheelLateralForce,
+			(void*)&CalculateUndersteerFactor,
+			(void*)&CalculateOversteerFactor,
 			(void*)&GetRideHeight,
 			(void*)&GetWheelRadius,
 			(void*)&GetMaxSteering,
@@ -595,16 +554,20 @@ namespace MWChassis {
 			(void*)&IsBrakingAssistOn,
 			(void*)&GetBrakingAssistLevel,
 			(void*)&SetBrakingAssistLevel,
+			(void*)&GetWheelEdgeOfControlSlipAngleLow,
+			(void*)&GetWheelEdgeOfControlSlipAngleHigh,
+			(void*)&GetWheelToleratedSlipRatio,
+			(void*)&GetWheelPeakLongForceSlipRatio,
 			(void*)&GetDragCoefficient,
 			(void*)&GetDownCoefficient,
 			(void*)&GetStaticGripForSpeed,
 			(void*)&SetClutchKickExtraTireSpin,
+			(void*)&GetHydraulicsCompression,
+			(void*)&ChangeSlot,
+			(void*)&IsSlotCar,
 			(void*)&GetWheelieAngle,
 			(void*)&IsStaticResetCondition,
+			(void*)&SetWindCondition,
 			(void*)&SetAICatchOverride,
-			(void*)&GetSlipToGripImpactTime,
-			(void*)&GetJumpTime,
-			(void*)&GetTimeFromLanding,
-			(void*)&IsCounterSteering,
 	};
 }

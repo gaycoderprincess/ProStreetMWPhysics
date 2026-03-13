@@ -4,6 +4,31 @@ namespace MWTransmission {
 		return (EngineRacer*)ptr;
 	}
 
+	GearID __thiscall GetGear(uintptr_t ptr);
+	GearID __thiscall GetTopGear(uintptr_t ptr);
+	bool __thiscall Shift(uintptr_t ptr, GearID);
+	bool __thiscall IsClutchEngaged(uintptr_t ptr);
+	bool __thiscall IsGearChanging(uintptr_t ptr);
+	bool __thiscall IsReversing(uintptr_t ptr);
+	float __thiscall GetSpeedometer(uintptr_t ptr);
+	float __thiscall GetMaxSpeedometer(uintptr_t ptr);
+	float __thiscall GetDriveTorqueAtEngine(uintptr_t ptr);
+	float __thiscall GetDriveTorque(uintptr_t ptr);
+	float __thiscall GetEngineBrakingTorque(uintptr_t ptr);
+	float __thiscall GetShiftPoint(uintptr_t ptr, GearID, GearID);
+	ShiftStatus __thiscall GetShiftStatus(uintptr_t ptr);
+	ShiftPotential __thiscall GetShiftPotential(uintptr_t ptr);
+	bool __thiscall DoClutchKick(uintptr_t ptr, float);
+	float __thiscall GetTorqueSplit(uintptr_t ptr);
+	float __thiscall GetTotalShiftTime(uintptr_t ptr);
+	ClutchState __thiscall GetClutchState(uintptr_t ptr);
+	float __thiscall GetTimeUntilTransition(uintptr_t ptr);
+	float __thiscall GetClutchPosition(uintptr_t ptr);
+	float __thiscall GetClutchGrind(uintptr_t ptr);
+	void __thiscall SetTransmissionOverride(uintptr_t ptr, eTransmissionOverride);
+	eTransmissionOverride __thiscall GetTransmissionOverride(uintptr_t ptr);
+	float __thiscall GetPerfectLaunchError(uintptr_t ptr);
+
 	GearID __thiscall GetGear(uintptr_t ptr) {
 		ITRANSMISSION_FUNCTION_LOG("GetGear");
 		auto pThis = GetEngineRacer(ptr);
@@ -14,7 +39,7 @@ namespace MWTransmission {
 		auto pThis = GetEngineRacer(ptr);
 		return pThis->GetTopGear();
 	}
-	bool __thiscall Shift(uintptr_t ptr, GearID gear, bool forceOnRemote = false) {
+	bool __thiscall Shift(uintptr_t ptr, GearID gear) {
 		ITRANSMISSION_FUNCTION_LOG("Shift");
 		auto pThis = GetEngineRacer(ptr);
 		return pThis->Shift(gear);

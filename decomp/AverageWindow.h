@@ -201,7 +201,6 @@ public:
 	void Blend(T *dest, T *a, T *b, const T blend_a);
 
 	// Credits: Brawltendo
-	// UNSOLVED
 	void GetValue(T *pValue, T x) {
 		if (NumEntries > 1) {
 			if (x <= GraphData[0].x) {
