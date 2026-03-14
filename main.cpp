@@ -335,7 +335,11 @@ void QuickValueEditor(const char* name, float& value) {
 void DebugMenu() {
 	ChloeMenuLib::BeginMenu();
 
-	if (DrawMenuOption("Speedbreaker")) {
+	if (bAffectOpponents) {
+		QuickValueEditor("AI Rubberband Factor", fOpponentRubberband);
+	}
+
+	if (DrawMenuOption("Toggle Speedbreaker")) {
 		PLAYER_LIST::GetList(PLAYER_LOCAL)[0]->ToggleGameBreaker();
 	}
 
@@ -592,7 +596,6 @@ std::vector<Attrib::Collection*> FindCollectionAndAllChildren(const char* classN
 	return out;
 }
 
-bool bAffectOpponents = false;
 UCrc32* __thiscall LookupBehaviorSignatureHooked(PVehicle* pThis, UCrc32* result, const Attrib::StringKey* mechanic) {
 	bool isCorrectDriverClass = pThis->mDriverClass == DRIVER_HUMAN;
 	if (bAffectOpponents && pThis->mDriverClass == DRIVER_RACER) isCorrectDriverClass = true;

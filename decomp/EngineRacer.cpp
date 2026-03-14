@@ -93,6 +93,13 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 
 	Reset();
 
+	// i dont think this does anything but its worth a try
+	if (bAffectOpponents) {
+		mCarInfo.GetLayout()->BRAKES.Front = mMWInfo->BRAKES.Front;
+		mCarInfo.GetLayout()->BRAKES.Rear = mMWInfo->BRAKES.Rear;
+		mCarInfo.GetLayout()->EBRAKE = mMWInfo->EBRAKE;
+	}
+
 	WriteLog("EngineRacer::Create finished");
 }
 

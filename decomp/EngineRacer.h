@@ -292,6 +292,7 @@ namespace Physics {
 	}
 }
 
+bool bAffectOpponents = false;
 float fOpponentRubberband = 0.0;
 class EngineRacer : public VehicleBehavior {
   public:

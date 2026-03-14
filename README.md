@@ -12,11 +12,8 @@ Massive thanks to everyone involved with [dbalatoni13's MW reverse engineering p
 
 ## Known issues
 
-- Drag burnouts don't work
-- Drag shifting is always displayed as missed
-- Drift events revert to the vanilla game's handling, as drift scoring currently doesn't work with MW physics
+- Drift and drag events revert to the vanilla game's handling, as burnouts, wheelies and drift scoring currently don't work with MW physics
 - Skidmarks and tire smoke aren't 100% accurate
-- Wheelie challenges don't work
 
 ## Building
 
