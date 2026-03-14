@@ -293,6 +293,7 @@ namespace Physics {
 }
 
 bool bAffectOpponents = false;
+bool bRevLimiter = true;
 float fOpponentRubberband = 0.0;
 class EngineRacer : public VehicleBehavior {
   public:
@@ -555,7 +556,7 @@ class EngineRacer : public VehicleBehavior {
 
 	ShiftStatus OnGearChange(GearID gear);
 	bool UseRevLimiter() const {
-		return true;
+		return bRevLimiter;
 	}
 	void DoECU();
 	float DoThrottle(float dT);

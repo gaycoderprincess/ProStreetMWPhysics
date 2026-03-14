@@ -84,8 +84,8 @@ cp orig_mw_full/corvettec6r.conf mclarenf1.conf
 cp orig_mw_full/corvettec6r_top.conf mclarenf1_top.conf
 cp orig_cb_full/roadrunner.conf roadrunner.conf
 cp orig_cb_full/roadrunner_top.conf roadrunner_top.conf
-cp orig_cb_full/roadrunner.conf gto65.conf
-cp orig_cb_full/roadrunner_top.conf gto65_top.conf
+cp orig_cb_full/cuda.conf gto65.conf
+cp orig_cb_full/cuda_top.conf gto65_top.conf
 cp orig_mw_full/gto.conf solsticegxp.conf
 cp orig_mw_full/gto_top.conf solsticegxp_top.conf
 cp orig_mw_full/punto.conf civichb.conf

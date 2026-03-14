@@ -548,9 +548,11 @@ bool GetIsVanillaEvent() {
 	return false;
 }
 
+bool bSpeedbreakerEnabled = false;
 void SpeedbreakerLoop() {
 	if (GetIsVanillaEvent()) nNOSState = 0;
 
+	if (!bSpeedbreakerEnabled) return;
 	if (DALPauseStates::mPauseRequest) return;
 	if (!Sim::Exists()) return;
 	if (Sim::GetState() != Sim::STATE_ACTIVE) return;
@@ -706,12 +708,14 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 			if (std::filesystem::exists("NFSPSMWPhysics_gcp.toml")) {
 				auto config = toml::parse_file("NFSPSMWPhysics_gcp.toml");
-				bAffectOpponents = config["affect_opponents"].value_or(false);
-				fOpponentRubberband = config["mw_opponent_rubberband"].value_or(0.0);
 				bEnabledGrip = config["mw_physics_grip"].value_or(bEnabledGrip);
 				bEnabledSpeed = config["mw_physics_speed"].value_or(bEnabledSpeed);
 				bEnabledDrag = config["mw_physics_drag"].value_or(bEnabledDrag);
 				bEnabledDrift = config["mw_physics_drift"].value_or(bEnabledDrift);
+				bAffectOpponents = config["mw_physics_opponents"].value_or(bAffectOpponents);
+				fOpponentRubberband = config["mw_opponent_rubberband"].value_or(0.0);
+				bSpeedbreakerEnabled = config["speedbreaker"].value_or(bSpeedbreakerEnabled);
+				bRevLimiter = config["rev_limiter"].value_or(bRevLimiter);
 			}
 
 			WriteLog("Mod initialized");
