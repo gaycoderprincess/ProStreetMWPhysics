@@ -70,7 +70,7 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 	//mCarInfo.mCollection = GetOwner()->GetAttributes()->mCollection;
 
 	mMWInfo = new MWCarTuning;
-	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
+	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetDriverClass() == DRIVER_HUMAN ? GetVehicle()->GetCustomizations() : nullptr);
 
 	mRPM = 0.0f;
 	mShiftStatus = SHIFT_STATUS_NONE;
@@ -782,7 +782,9 @@ void EngineRacer::OnTaskSimulate(float dT) {
 	DoInduction(tunings, dT);
 	DoShifting(dT);
 
-	nNOSState = iinput->GetControlNOS();
+	if (GetVehicle()->GetDriverClass() == DRIVER_HUMAN) {
+		nNOSState = iinput->GetControlNOS();
+	}
 
 	float max_rpm = UseRevLimiter() ? mMWInfo->RED_LINE : mMWInfo->MAX_RPM;
 	float max_w = RPM2RPS(max_rpm);

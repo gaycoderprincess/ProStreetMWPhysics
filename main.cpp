@@ -529,7 +529,17 @@ void RegisterNewBehaviors() {
 	FactoryEntry::mHead = &__SuspensionRacerMW;
 }
 
+bool GetIsVanillaEvent() {
+	if (GRaceStatus::fObj && GRaceStatus::fObj->mRaceParms) {
+		auto raceType = GRaceParameters::GetRaceType(GRaceStatus::fObj->mRaceParms);
+		return (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) || (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max);
+	}
+	return false;
+}
+
 void SpeedbreakerLoop() {
+	if (GetIsVanillaEvent()) nNOSState = 0;
+
 	if (DALPauseStates::mPauseRequest) return;
 	if (!Sim::Exists()) return;
 	if (Sim::GetState() != Sim::STATE_ACTIVE) return;
@@ -584,14 +594,9 @@ std::vector<Attrib::Collection*> FindCollectionAndAllChildren(const char* classN
 
 bool bAffectOpponents = false;
 UCrc32* __thiscall LookupBehaviorSignatureHooked(PVehicle* pThis, UCrc32* result, const Attrib::StringKey* mechanic) {
-	bool isVanillaEvent = false;
-	if (GRaceStatus::fObj && GRaceStatus::fObj->mRaceParms) {
-		auto raceType = GRaceParameters::GetRaceType(GRaceStatus::fObj->mRaceParms);
-		isVanillaEvent = (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) || (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max);
-	}
 	bool isCorrectDriverClass = pThis->mDriverClass == DRIVER_HUMAN;
 	if (bAffectOpponents && pThis->mDriverClass == DRIVER_RACER) isCorrectDriverClass = true;
-	if (isCorrectDriverClass && !isVanillaEvent) {
+	if (isCorrectDriverClass && !GetIsVanillaEvent()) {
 		if (mechanic == &BEHAVIOR_MECHANIC_ENGINE) {
 			*result = __EngineRacerMW.mSignature;
 			return result;

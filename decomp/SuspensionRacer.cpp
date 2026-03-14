@@ -474,7 +474,7 @@ void SuspensionRacer::Create(const BehaviorParams& bp) {
 	//mCarInfo.mLayoutPtr = GetOwner()->GetAttributes()->mLayoutPtr;
 	
 	mMWInfo = new MWCarTuning;
-	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
+	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetDriverClass() == DRIVER_HUMAN ? GetVehicle()->GetCustomizations() : nullptr);
 
 	mRB = nullptr;
 	mCollisionBody = nullptr;
