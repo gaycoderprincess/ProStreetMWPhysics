@@ -8,6 +8,8 @@
 #include "nya_commonmath.h"
 #include "nfsps.h"
 
+#include "inputs.h"
+
 #include "include/chloemenulib.h"
 
 void WriteLog(const std::string& str) {
@@ -333,6 +335,10 @@ void QuickValueEditor(const char* name, float& value) {
 void DebugMenu() {
 	ChloeMenuLib::BeginMenu();
 
+	if (DrawMenuOption("Speedbreaker")) {
+		PLAYER_LIST::GetList(PLAYER_LOCAL)[0]->ToggleGameBreaker();
+	}
+
 	if (DrawMenuOption("EngineRacer")) {
 		ChloeMenuLib::BeginMenu();
 
@@ -523,6 +529,25 @@ void RegisterNewBehaviors() {
 	FactoryEntry::mHead = &__SuspensionRacerMW;
 }
 
+void SpeedbreakerLoop() {
+	if (DALPauseStates::mPauseRequest) return;
+	if (!Sim::Exists()) return;
+	if (Sim::GetState() != Sim::STATE_ACTIVE) return;
+	if (INIS::mInstance) return;
+	if (!GRaceStatus::fObj) return;
+	if (!GRaceStatus::fObj->mRaceParms) return;
+
+	auto list = PLAYER_LIST::GetList(PLAYER_LOCAL);
+	if (list.empty()) return;
+
+	auto ply = list[0];
+	if (IsKeyJustPressed('X') || IsPadKeyJustPressed(NYA_PAD_KEY_X, -1)) {
+		ply->ToggleGameBreaker();
+	}
+
+	RefreshInputs();
+}
+
 void AssistLoop() {
 	auto list = VEHICLE_LIST::GetList(VEHICLE_PLAYERS);
 	if (list.empty()) return;
@@ -595,7 +620,7 @@ void PreProcessCarTuning(const std::string& filename) {
 		return;
 	}
 
-	auto collections = FindCollectionAndAllChildren("pvehicle", tuning->carName.c_str());
+	auto collections = FindCollectionAndAllChildren("vehicle", tuning->carName.c_str());
 	for (auto collection : collections) {
 		auto f = (float*)Attrib::Collection::GetData(collection, Attrib::StringHash32("TENSOR_SCALE"), 0);
 		f[0] = tuning->TENSOR_SCALE[0];
@@ -635,6 +660,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 			});
 			NyaHooks::WorldServiceHook::Init();
 			NyaHooks::WorldServiceHook::aPreFunctions.push_back(AssistLoop);
+			NyaHooks::WorldServiceHook::aPreFunctions.push_back(SpeedbreakerLoop);
 
 			ChloeMenuLib::RegisterMenu("MW Physics Debug Menu", &DebugMenu);
 
