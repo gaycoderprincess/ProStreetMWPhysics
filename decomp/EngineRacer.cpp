@@ -399,7 +399,7 @@ ShiftStatus EngineRacer::OnGearChange(GearID gear) {
 
 // Credits: Brawltendo
 bool EngineRacer::DoGearChange(GearID gear, bool automatic) {
-	if (GetVehicle()->IsStaging() && gear == G_NEUTRAL) gear = G_FIRST;
+	if (GetVehicle()->IsStaging() && gear == G_NEUTRAL) gear = G_FIRST; // hack for prostreet to start staging in first gear
 
 	if (gear > GetTopGear()) {
 		return false;
