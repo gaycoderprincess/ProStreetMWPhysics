@@ -10,7 +10,7 @@ SET(CMAKE_RANLIB i686-w64-mingw32-ranlib)
 
 SET(CMAKE_CXX_STANDARD 20)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -masm=intel -static")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -masm=intel -s -static")
 
 add_compile_definitions(NYA_COMMON_NO_D3D SUSPENSIONRACER_ELISE_TEST)
 #add_compile_definitions(NYA_COMMON_NO_D3D)
@@ -19,7 +19,7 @@ target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common)
 target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common/3rdparty)
 target_include_directories(NFSPSMWPhysics PUBLIC ../nya-common-nfsps)
 target_include_directories(NFSPSMWPhysics PUBLIC ../CwoeeMenuLib)
-#target_link_options(NFSPSMWPhysics PRIVATE "-Wl,--exclude-all-symbols")
+target_link_options(NFSPSMWPhysics PRIVATE "-Wl,--exclude-all-symbols")
 
 set_target_properties(NFSPSMWPhysics PROPERTIES PREFIX "")
 set_target_properties(NFSPSMWPhysics PROPERTIES SUFFIX "_gcp.asi")
