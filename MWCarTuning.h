@@ -370,15 +370,22 @@ void GetLerpedCarTuning(MWCarTuning& tmp, const std::string& model, float brake,
 	while (tmp.GEAR_RATIO[tmp.GEAR_RATIO.size()-1] <= 0.0) { tmp.GEAR_RATIO.pop_back(); }
 }
 
+int GetPerformanceKitNum(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
+	DBCarPart db{};
+	auto b = VehicleCustomizations::GetInstalledPart((VehicleCustomizations*)cust, type, cust->Type, &db);
+	if (!b) return -1;
+	return db.kitNum;
+}
+
 void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
 	if (cust) {
-		float brake = (cust->InstalledParts[CARSLOTID_TIRE_PACKAGE] + 1) / 4.0; // todo are brake upgrades not a thing here?
-		float drivetrain = (cust->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE] + 1) / 4.0;
-		float engine = (cust->InstalledParts[CARSLOTID_ENGINE_PACKAGE] + 1) / 4.0;
-		float induction = (cust->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE] + 1) / 4.0;
-		float nitro = cust->InstalledParts[CARSLOTID_NITROUS_PACKAGE] / 3.0;
-		float suspension = (cust->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE] + 1) / 4.0;
-		float tire = (cust->InstalledParts[CARSLOTID_TIRE_PACKAGE] + 1) / 4.0;
+		float brake = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 4.0; // todo are brake upgrades not a thing here?
+		float drivetrain = (GetPerformanceKitNum(cust, CARSLOTID_DRIVETRAIN_PACKAGE) + 1) / 4.0;
+		float engine = (GetPerformanceKitNum(cust, CARSLOTID_ENGINE_PACKAGE) + 1) / 4.0;
+		float induction = (GetPerformanceKitNum(cust, CARSLOTID_FORCED_INDUCTION_PACKAGE) + 1) / 4.0;
+		float nitro = GetPerformanceKitNum(cust, CARSLOTID_NITROUS_PACKAGE) / 3.0;
+		float suspension = (GetPerformanceKitNum(cust, CARSLOTID_SUSPENSION_PACKAGE) + 1) / 4.0;
+		float tire = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 4.0;
 		return GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
 	}
 	else {

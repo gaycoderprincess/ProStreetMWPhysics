@@ -595,7 +595,7 @@ void PreProcessCarTuning(const std::string& filename) {
 		return;
 	}
 
-	auto collections = FindCollectionAndAllChildren("vehicle", tuning->carName.c_str());
+	auto collections = FindCollectionAndAllChildren("pvehicle", tuning->carName.c_str());
 	for (auto collection : collections) {
 		auto f = (float*)Attrib::Collection::GetData(collection, Attrib::StringHash32("TENSOR_SCALE"), 0);
 		f[0] = tuning->TENSOR_SCALE[0];
