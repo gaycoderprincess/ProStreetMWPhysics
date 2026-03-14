@@ -1,6 +1,6 @@
 # ProStreet Most Wanted Physics
 
-Experiment for Need for Speed: ProStreet that converts the physics and handling model from Most Wanted and Carbon
+Experiment for Need for Speed: ProStreet that converts the physics and handling model from Most Wanted and Carbon, including rechargeable NOS and the ability to use speedbreaker
 
 Massive thanks to everyone involved with [dbalatoni13's MW reverse engineering project](https://github.com/dbalatoni13/nfsmw), this mod was heavily based off of it.
 
