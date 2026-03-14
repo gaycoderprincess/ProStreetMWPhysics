@@ -80,7 +80,9 @@ public:
 	}
 
 	void DeInit() {
-		gFastMem.Free(pTimeData, AllocSize, "AverageWindow::TimeData");
+		if (pTimeData) {
+			gFastMem.Free(pTimeData, AllocSize, "AverageWindow::TimeData");
+		}
 		Average::DeInit();
 	}
 

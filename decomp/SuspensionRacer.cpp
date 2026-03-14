@@ -1849,6 +1849,8 @@ void SuspensionRacer::OnTaskSimulate(float dT) {
 }
 
 void MWWheel::UpdateSurface(const Attrib::Collection* surface) {
+	mSurface.dtor();
+	memset(&mSurface,0,sizeof(mSurface));
 	mSurface = Attrib::Instance(surface, 0);
 }
 
@@ -1906,9 +1908,7 @@ void SuspensionRacer::dtor(char a2) {
 
 	delete mMWInfo;
 
-	//if (mCarInfo.mCollection) {
-	//	Attrib::Collection::Release(mCarInfo.mCollection, 0);
-	//}
+	mCarInfo.dtor();
 
 	mSteering.InputAverage.DeInit();
 	mSteering.InputSpeedCoeffAverage.DeInit();

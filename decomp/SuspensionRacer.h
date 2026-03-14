@@ -43,6 +43,8 @@ public:
 		mForce.y = 0.0;
 		mForce.z = 0.0;
 		mWorldPos = WWorldPos();
+		mSurface.dtor();
+		memset(&mSurface,0,sizeof(mSurface));
 	}
 
 	void UpdateSurface(const Attrib::Collection* surface);
@@ -108,9 +110,7 @@ public:
 	}
 
 	const SimSurface *GetSurface() const {
-		static uint8_t tmp[sizeof(Attrib::Instance)];
-		memcpy(tmp, &mSurface, sizeof(tmp));
-		return (SimSurface*)tmp;
+		return (SimSurface*)&mSurface;
 
 		//static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
 		//surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));

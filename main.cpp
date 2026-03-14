@@ -582,13 +582,16 @@ std::vector<Attrib::Collection*> FindCollectionAndAllChildren(const char* classN
 	return out;
 }
 
+bool bAffectOpponents = false;
 UCrc32* __thiscall LookupBehaviorSignatureHooked(PVehicle* pThis, UCrc32* result, const Attrib::StringKey* mechanic) {
-	bool isDriftEvent = false;
+	bool isVanillaEvent = false;
 	if (GRaceStatus::fObj && GRaceStatus::fObj->mRaceParms) {
 		auto raceType = GRaceParameters::GetRaceType(GRaceStatus::fObj->mRaceParms);
-		isDriftEvent = (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max);
+		isVanillaEvent = (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) || (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max);
 	}
-	if (pThis->mDriverClass == DRIVER_HUMAN && !isDriftEvent) {
+	bool isCorrectDriverClass = pThis->mDriverClass == DRIVER_HUMAN;
+	if (bAffectOpponents && pThis->mDriverClass == DRIVER_RACER) isCorrectDriverClass = true;
+	if (isCorrectDriverClass && !isVanillaEvent) {
 		if (mechanic == &BEHAVIOR_MECHANIC_ENGINE) {
 			*result = __EngineRacerMW.mSignature;
 			return result;
@@ -685,6 +688,11 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 			//SkipFEForever = true;
 			//SkipFEPlayerCar = "rx7";
 			//SkipFETrackNumber = 6000;
+
+			if (std::filesystem::exists("NFSPSMWPhysics_gcp.toml")) {
+				auto config = toml::parse_file("NFSPSMWPhysics_gcp.toml");
+				bAffectOpponents = config["affect_opponents"].value_or(false);
+			}
 
 			WriteLog("Mod initialized");
 		} break;

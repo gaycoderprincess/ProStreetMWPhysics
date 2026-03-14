@@ -109,9 +109,7 @@ void EngineRacer::dtor(char a2) {
 
 	delete mMWInfo;
 
-	//if (mCarInfo.mCollection) {
-	//	Attrib::Collection::Release(mCarInfo.mCollection, 0);
-	//}
+	mCarInfo.dtor();
 
 	//dtor_simobject(this); // todo frees the interface list
 
@@ -399,6 +397,8 @@ ShiftStatus EngineRacer::OnGearChange(GearID gear) {
 
 // Credits: Brawltendo
 bool EngineRacer::DoGearChange(GearID gear, bool automatic) {
+	if (GetVehicle()->IsStaging() && gear == G_NEUTRAL) gear = G_FIRST;
+
 	if (gear > GetTopGear()) {
 		return false;
 	}

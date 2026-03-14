@@ -379,13 +379,13 @@ int GetPerformanceKitNum(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
 
 void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
 	if (cust) {
-		float brake = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 7.0; // todo are brake upgrades not a thing here?
+		float brake = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0; // todo are brake upgrades not a thing here?
 		float drivetrain = (GetPerformanceKitNum(cust, CARSLOTID_DRIVETRAIN_PACKAGE) + 1) / 7.0;
 		float engine = (GetPerformanceKitNum(cust, CARSLOTID_ENGINE_PACKAGE) + 1) / 7.0;
 		float induction = (GetPerformanceKitNum(cust, CARSLOTID_FORCED_INDUCTION_PACKAGE) + 1) / 7.0;
 		float nitro = GetPerformanceKitNum(cust, CARSLOTID_NITROUS_PACKAGE) / 6.0;
 		float suspension = (GetPerformanceKitNum(cust, CARSLOTID_SUSPENSION_PACKAGE) + 1) / 7.0;
-		float tire = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 7.0;
+		float tire = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0;
 		return GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
 	}
 	else {
