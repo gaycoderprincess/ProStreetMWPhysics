@@ -533,10 +533,17 @@ void RegisterNewBehaviors() {
 	FactoryEntry::mHead = &__SuspensionRacerMW;
 }
 
+bool bEnabledGrip = true;
+bool bEnabledSpeed = true;
+bool bEnabledDrag = false;
+bool bEnabledDrift = false;
 bool GetIsVanillaEvent() {
 	if (GRaceStatus::fObj && GRaceStatus::fObj->mRaceParms) {
 		auto raceType = GRaceParameters::GetRaceType(GRaceStatus::fObj->mRaceParms);
-		return (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) || (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max);
+		if (raceType >= GRace::kRaceType_Grip_Min && raceType < GRace::kRaceType_Grip_Max) return !bEnabledGrip;
+		if (raceType >= GRace::kRaceType_P2P_Min && raceType < GRace::kRaceType_P2P_Max) return !bEnabledSpeed;
+		if (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max) return !bEnabledDrag;
+		if (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) return !bEnabledDrift;
 	}
 	return false;
 }
@@ -701,6 +708,10 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 				auto config = toml::parse_file("NFSPSMWPhysics_gcp.toml");
 				bAffectOpponents = config["affect_opponents"].value_or(false);
 				fOpponentRubberband = config["mw_opponent_rubberband"].value_or(0.0);
+				bEnabledGrip = config["mw_physics_grip"].value_or(bEnabledGrip);
+				bEnabledSpeed = config["mw_physics_speed"].value_or(bEnabledSpeed);
+				bEnabledDrag = config["mw_physics_drag"].value_or(bEnabledDrag);
+				bEnabledDrift = config["mw_physics_drift"].value_or(bEnabledDrift);
 			}
 
 			WriteLog("Mod initialized");

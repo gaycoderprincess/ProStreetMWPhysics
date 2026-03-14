@@ -367,7 +367,7 @@ void GetLerpedCarTuning(MWCarTuning& tmp, const std::string& model, float brake,
 	TUNED_VALUE(PSI, induction);
 	TUNED_VALUE(HIGH_BOOST, induction);
 
-	while (tmp.GEAR_RATIO[tmp.GEAR_RATIO.size()-1] <= 0.0) { tmp.GEAR_RATIO.pop_back(); }
+	while (tmp.GEAR_RATIO[tmp.GEAR_RATIO.size()-1] <= 0.35) { tmp.GEAR_RATIO.pop_back(); }
 }
 
 int GetPerformanceKitNum(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
