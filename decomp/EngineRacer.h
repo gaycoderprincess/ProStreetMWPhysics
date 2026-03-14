@@ -292,6 +292,7 @@ namespace Physics {
 	}
 }
 
+float fOpponentRubberband = 0.0;
 class EngineRacer : public VehicleBehavior {
   public:
 	struct Clutch {
@@ -611,7 +612,17 @@ class EngineRacer : public VehicleBehavior {
 		return mShiftDownRPM[gear];
 	}
 
-	float GetCatchupCheat() const { return 0.0; }
+	float GetCatchupCheat() const {
+		if (fOpponentRubberband > 0.0 && GetVehicle()->GetDriverClass() != DRIVER_HUMAN) {
+			if (mCheater) mCheater->SetCatchupCheatOverride(fOpponentRubberband);
+			return fOpponentRubberband;
+		}
+
+		if (mCheater) {
+			return mCheater->GetCatchupCheat();
+		}
+		return 0.0;
+	}
 
 	float mDriveTorque;
 	float mDriveTorqueAtEngine;
@@ -634,6 +645,7 @@ class EngineRacer : public VehicleBehavior {
 	float mSportShifting;
 	IInput *mIInput;
 	IChassis *mSuspension;
+	ICheater *mCheater;
 	MWCarTuning* mMWInfo;
 	Attrib::Gen::vehicle mCarInfo;
 	float mRPM;

@@ -83,6 +83,7 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 
 	GetOwner()->QueryInterface(&mIInput);
 	GetOwner()->QueryInterface(&mSuspension);
+	GetOwner()->QueryInterface(&mCheater);
 
 	if (mMWInfo->NOS_CAPACITY > 0.0f) {
 		mNOSCapacity = 1.0f;
@@ -128,8 +129,9 @@ float EngineRacer::GetHorsePower() const {
 
 void EngineRacer::OnBehaviorChange(const UCrc32 &mechanic) {
 	ENGINERACER_FUNCTION_LOG("OnBehaviorChange");
-	if (mechanic.mCRC == BEHAVIOR_MECHANIC_AI.mHash32) {
+	if (mechanic.mCRC == BEHAVIOR_MECHANIC_AI.mHash32 || mechanic.mCRC == BEHAVIOR_MECHANIC_INPUT.mHash32) {
 		GetOwner()->QueryInterface(&mIInput);
+		GetOwner()->QueryInterface(&mCheater);
 	}
 	if (mechanic.mCRC == BEHAVIOR_MECHANIC_SUSPENSION.mHash32) {
 		GetOwner()->QueryInterface(&mSuspension);

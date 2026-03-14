@@ -697,6 +697,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 			if (std::filesystem::exists("NFSPSMWPhysics_gcp.toml")) {
 				auto config = toml::parse_file("NFSPSMWPhysics_gcp.toml");
 				bAffectOpponents = config["affect_opponents"].value_or(false);
+				fOpponentRubberband = config["mw_opponent_rubberband"].value_or(0.0);
 			}
 
 			WriteLog("Mod initialized");
