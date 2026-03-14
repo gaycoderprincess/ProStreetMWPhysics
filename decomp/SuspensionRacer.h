@@ -525,7 +525,7 @@ public:
 	int GetPriority() { SUSPENSIONRACER_FUNCTION_LOG("GetPriority"); return mPriority; }
 	float GetDownCoefficient(float f) { SUSPENSIONRACER_FUNCTION_LOG("GetDownCoefficient"); return GetIChassis()->GetDownCoefficient(); }
 	float GetDynamicRideHeight(unsigned int idx, State*) { SUSPENSIONRACER_FUNCTION_LOG("GetDynamicRideHeight"); return GetRideHeight(idx); }
-	float GetDriftValue() { SUSPENSIONRACER_FUNCTION_LOG("GetDriftValue"); return 0.0; } // todo
+	float GetDriftValue() { SUSPENSIONRACER_FUNCTION_LOG("GetDriftValue"); return mDrift.Value; }
 	void ApplyVehicleEntryForces(bool enteringVehicle, const UMath::Vector3 *pos, bool calledfromEvent) { SUSPENSIONRACER_FUNCTION_LOG("ApplyVehicleEntryForces");  }
 
 	void dtor(char a2);
