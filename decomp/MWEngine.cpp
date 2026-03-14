@@ -170,12 +170,12 @@ namespace MWEngine {
 	float __thiscall GetPerfectShiftMinRPM(uintptr_t ptr, GearID gear) { // todo
 		IENGINE_FUNCTION_LOG("GetPerfectShiftMinRPM");
 		auto pThis = GetEngineRacer(ptr);
-		return pThis->GetShiftPoint(pThis->GetGear(), gear) - 50.0;
+		return pThis->GetShiftPoint(pThis->GetGear(), gear) - 250.0;
 	}
 	float __thiscall GetPerfectShiftMaxRPM(uintptr_t ptr, GearID gear) { // todo
 		IENGINE_FUNCTION_LOG("GetPerfectShiftMaxRPM");
 		auto pThis = GetEngineRacer(ptr);
-		return pThis->GetShiftPoint(pThis->GetGear(), gear) + 50.0;
+		return pThis->GetShiftPoint(pThis->GetGear(), gear) + 250.0;
 	}
 	void __thiscall unknown(uintptr_t ptr, Attrib::Collection* collection) {
 		IENGINE_FUNCTION_LOG("unknown");

@@ -108,7 +108,9 @@ public:
 	}
 
 	const SimSurface *GetSurface() const {
-		return (SimSurface*)&mSurface;
+		static uint8_t tmp[sizeof(Attrib::Instance)];
+		memcpy(tmp, &mSurface, sizeof(tmp));
+		return (SimSurface*)tmp;
 
 		//static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
 		//surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));

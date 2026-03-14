@@ -586,6 +586,24 @@ void __attribute__((naked)) __fastcall StickyNOSASM() {
 	);
 }
 
+void PreProcessCarTuning(const std::string& filename) {
+	if (!filename.ends_with(".conf")) return;
+
+	auto tuning = LoadCarTuningFromFile(filename);
+	if (!tuning) {
+		WriteLog(std::format("Failed to load {}", filename));
+		return;
+	}
+
+	auto collections = FindCollectionAndAllChildren("vehicle", tuning->carName.c_str());
+	for (auto collection : collections) {
+		auto f = (float*)Attrib::Collection::GetData(collection, Attrib::StringHash32("TENSOR_SCALE"), 0);
+		f[0] = tuning->TENSOR_SCALE[0];
+		f[1] = tuning->TENSOR_SCALE[1];
+		f[2] = tuning->TENSOR_SCALE[2];
+	}
+}
+
 BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 	switch( fdwReason ) {
 		case DLL_PROCESS_ATTACH: {
@@ -604,23 +622,15 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 				for (const auto& entry : std::filesystem::directory_iterator("CarDataDump")) {
 					if (entry.is_directory()) continue;
-
-					auto filename = entry.path().filename().string();
-					if (!filename.ends_with(".conf")) continue;
-
-					auto tuning = LoadCarTuningFromFile(filename);
-					if (!tuning) {
-						WriteLog(std::format("Failed to load {}", filename));
-						continue;
-					}
-
-					auto collections = FindCollectionAndAllChildren("vehicle", tuning->carName.c_str());
-					for (auto collection : collections) {
-						auto f = (float*)Attrib::Collection::GetData(collection, Attrib::StringHash32("TENSOR_SCALE"), 0);
-						f[0] = tuning->TENSOR_SCALE[0];
-						f[1] = tuning->TENSOR_SCALE[1];
-						f[2] = tuning->TENSOR_SCALE[2];
-					}
+					PreProcessCarTuning(entry.path().filename().string());
+				}
+				for (const auto& entry : std::filesystem::directory_iterator("CarDataDump/orig_mw_full")) {
+					if (entry.is_directory()) continue;
+					PreProcessCarTuning(entry.path().filename().string());
+				}
+				for (const auto& entry : std::filesystem::directory_iterator("CarDataDump/orig_cb_full")) {
+					if (entry.is_directory()) continue;
+					PreProcessCarTuning(entry.path().filename().string());
 				}
 			});
 			NyaHooks::WorldServiceHook::Init();
