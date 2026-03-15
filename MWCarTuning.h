@@ -377,6 +377,46 @@ int GetPerformanceKitNum(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
 	return db.kitNum;
 }
 
+// this is insanely stupid but PVehicles don't have the full VehicleCustomizations, so things like PhysicsTuning aren't in there
+VehicleCustomizations* GetCustomizationWithTheseParts(uint32_t carType, const int16_t* parts) {
+	auto cars = &UserProfile::spUserProfiles[0]->mCarStable;
+
+	std::vector<VehicleCustomizations*> customizations;
+	for (auto& car : cars->CarTable) {
+		if (car.Handle == 0xFFFFFFFF) continue;
+
+		auto cust = FEPlayerCarDB::GetCustomizationRecordByHandle(cars, car.Customization);
+		if (!cust) continue;
+
+		if (cust->Type != carType) continue;
+
+		if (cust->mBlueprintUsed[0]) customizations.push_back(&cust->mBluePrint[0]);
+		if (cust->mBlueprintUsed[1]) customizations.push_back(&cust->mBluePrint[1]);
+		if (cust->mBlueprintUsed[2]) customizations.push_back(&cust->mBluePrint[2]);
+	}
+
+	for (auto& target : customizations) {
+		bool mismatch = false;
+		for (int i = 0; i < CARSLOTID_NUM; i++) {
+			if (i == CARSLOTID_BRAKE_CALIPER_FRONT) continue;
+			if (i == CARSLOTID_BRAKE_CALIPER_REAR) continue;
+			if (i == CARSLOTID_BRAKE_ROTOR_FRONT) continue;
+			if (i == CARSLOTID_BRAKE_ROTOR_REAR) continue;
+			if (parts[i] != target->InstalledParts[i]) {
+				mismatch = true;
+				break;
+			}
+		}
+		if (mismatch) continue;
+		return target;
+	}
+	return nullptr;
+}
+
+float GetPhysicsTuningValue(float in, float max) {
+	return (in * max) + 1.0;
+}
+
 void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
 	if (cust) {
 		float brake = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0; // todo are brake upgrades not a thing here?
@@ -386,9 +426,56 @@ void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const Vehicl
 		float nitro = GetPerformanceKitNum(cust, CARSLOTID_NITROUS_PACKAGE) / 6.0;
 		float suspension = (GetPerformanceKitNum(cust, CARSLOTID_SUSPENSION_PACKAGE) + 1) / 7.0;
 		float tire = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0;
-		return GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
+		GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
+
+		if (auto real = GetCustomizationWithTheseParts(cust->Type, cust->InstalledParts)) {
+			// physics_tuning data:
+			// physics_tuning_slider 0,0 means -value, 0,1 means value
+
+			// transmission tunings
+			if (out.GEAR_RATIO.size() > G_FIRST) out.GEAR_RATIO[G_FIRST] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_1], -0.1));
+			if (out.GEAR_RATIO.size() > G_SECOND) out.GEAR_RATIO[G_SECOND] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_2], -0.1));
+			if (out.GEAR_RATIO.size() > G_THIRD) out.GEAR_RATIO[G_THIRD] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_3], -0.1));
+			if (out.GEAR_RATIO.size() > G_FOURTH) out.GEAR_RATIO[G_FOURTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_4], -0.1));
+			if (out.GEAR_RATIO.size() > G_FIFTH) out.GEAR_RATIO[G_FIFTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_5], -0.1));
+			if (out.GEAR_RATIO.size() > G_SIXTH) out.GEAR_RATIO[G_SIXTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_6], -0.1));
+			out.FINAL_GEAR *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_FINAL], 0.1);
+
+			// suspension tunings
+			out.SWAYBAR_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_ROLL_BAR_STIFFNESS], -0.1);
+			out.SWAYBAR_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_ROLL_BAR_STIFFNESS], -0.1);
+			out.SHOCK_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_SHOCK_COMPRESSION_RATE], 0.15);
+			out.SHOCK_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_SHOCK_COMPRESSION_RATE], 0.15);
+			out.SHOCK_EXT_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_SHOCK_REBOUND_RATE], 0.15);
+			out.SHOCK_EXT_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_SHOCK_REBOUND_RATE], 0.15);
+			out.SPRING_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_SPRING_RATE], 0.3);
+			out.SPRING_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_SPRING_RATE], 0.3);
+		}
+		else {
+			WriteLog(std::format("Failed to find FECarRecord for customized {}", model));
+		}
 	}
 	else {
 		return GetLerpedCarTuning(out, model, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
 	}
+}
+
+Physics::Tunings* GetVehicleMWTunings(IVehicle* veh) {
+	auto cust = veh->GetCustomizations();
+	if (!cust) return nullptr;
+
+	auto real = GetCustomizationWithTheseParts(cust->Type, cust->InstalledParts);
+	if (!real) return nullptr;
+
+	static Physics::Tunings tmp;
+	memset(&tmp, 0, sizeof(tmp));
+	tmp.Value[Physics::Tunings::STEERING] = real->PhysicsTuning[VehicleCustomizations::STEERING_RESPONSE_RATIO];
+	//tmp.Value[Physics::Tunings::HANDLING] = (real->PhysicsTuning[VehicleCustomizations::FRONT_TIRE_PRESSURE] + real->PhysicsTuning[VehicleCustomizations::FRONT_TIRE_PRESSURE]) / 2.0;
+	tmp.Value[Physics::Tunings::BRAKES] = real->PhysicsTuning[VehicleCustomizations::BRAKE_BIAS] * -1.0;
+	tmp.Value[Physics::Tunings::RIDEHEIGHT] = real->PhysicsTuning[VehicleCustomizations::RIDE_HEIGHT];
+	tmp.Value[Physics::Tunings::AERODYNAMICS] = real->PhysicsTuning[VehicleCustomizations::DRAG_VS_DOWNFORCE];
+	float nos = real->PhysicsTuning[VehicleCustomizations::NITROUS_JETTING_FLOW_RATE] - real->PhysicsTuning[VehicleCustomizations::NITROUS_PRESSURE];
+	tmp.Value[Physics::Tunings::NOS] = UMath::Clamp(nos, -1.0, 1.0);
+	//tmp.Value[Physics::Tunings::INDUCTION] = real->PhysicsTuning[VehicleCustomizations::];
+	return &tmp;
 }
