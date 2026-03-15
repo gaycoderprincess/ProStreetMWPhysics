@@ -14,6 +14,7 @@ Massive thanks to everyone involved with [dbalatoni13's MW reverse engineering p
 
 - Fine tuning has been entirely redone, many options might change car performance in different ways than before, and the following tunings do not affect anything anymore: Brake Pressure, Camber, Caster, Start/End Boost, Tire Pressure, Handbrake Pressure, Toe, Cam Timing
 - FOR DEVELOPERS: Almost all VLT values have been replaced! For editing car handling, edit the files in `CarDataDump` instead, except for these values: `ASPECT_RATIO`, `FRONT_AXLE`, `RIM_SIZE`, `SECTION_WIDTH`, `TRACK_WIDTH`, `WHEEL_BASE`
+- Manual transmission no longer gives you an advantage, and the clutch button has been entirely removed
 
 ## Known issues
 
