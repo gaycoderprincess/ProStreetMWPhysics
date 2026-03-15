@@ -52,6 +52,10 @@ public:
 #define ITRANSMISSION_FUNCTION_LOG(name) {}
 #define IENGINE_FUNCTION_LOG(name) {}
 
+bool bAffectOpponents = false;
+bool bRevLimiter = true;
+float fOpponentRubberband = 0.0;
+
 #include "decomp/ConversionUtil.hpp"
 
 auto cartuning_LookupKey = (uint32_t(__thiscall*)(const ISimable*))0x49D000;

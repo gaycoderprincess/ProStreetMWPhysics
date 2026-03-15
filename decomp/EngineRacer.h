@@ -292,9 +292,6 @@ namespace Physics {
 	}
 }
 
-bool bAffectOpponents = false;
-bool bRevLimiter = true;
-float fOpponentRubberband = 0.0;
 class EngineRacer : public VehicleBehavior {
   public:
 	struct Clutch {
