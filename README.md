@@ -20,6 +20,7 @@ Massive thanks to everyone involved with [dbalatoni13's MW reverse engineering p
 
 ## Known issues
 
+- Drafting no longer works
 - Drift and drag events revert to the vanilla game's handling, as burnouts, wheelies and drift scoring currently don't work with MW physics
 - Skidmarks and tire smoke aren't 100% accurate
 
