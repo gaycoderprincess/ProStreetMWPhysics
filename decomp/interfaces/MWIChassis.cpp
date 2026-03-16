@@ -273,8 +273,7 @@ namespace MWIChassis {
 	unsigned int __thiscall GetNumWheelsOnBand(uintptr_t ptr) { // todo what is this?
 		ICHASSIS_FUNCTION_LOG("GetNumWheelsOnBand");
 		auto pThis = GetSuspensionRacer(ptr);
-		//return pThis->mNumWheelsOnGround;
-		return 0;
+		return pThis->mNumWheelsOnGround;
 	}
 	float __thiscall GetWheelAngularVelocity(uintptr_t ptr, int index) {
 		ICHASSIS_FUNCTION_LOG("GetWheelAngularVelocity");

@@ -157,6 +157,5 @@ class SuspensionSimpleMW : public ChassisMW {
 		void OnCollision(const Sim::Collision::Info *cinfo);
 	} tmpCollisionListener;
 
-	float GetDriftValue() { SUSPENSIONSIMPLE_FUNCTION_LOG("GetDriftValue"); return 0.0; }
 	void ApplyVehicleEntryForces(bool enteringVehicle, const UMath::Vector3 *pos, bool calledfromEvent) { SUSPENSIONSIMPLE_FUNCTION_LOG("ApplyVehicleEntryForces");  }
 };
