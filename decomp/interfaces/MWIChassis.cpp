@@ -320,12 +320,7 @@ namespace MWIChassis {
 	float __thiscall GetRideHeight(uintptr_t ptr, unsigned int idx) {
 		ICHASSIS_FUNCTION_LOG("GetRideHeight");
 		auto pThis = GetSuspensionRacer(ptr);
-		float ride = pThis->GetRideHeight(idx);
-		const Physics::Tunings *tunings = GetVehicleMWTunings(pThis->GetVehicle());
-		if (tunings) {
-			ride += INCH2METERS(tunings->Value[Physics::Tunings::RIDEHEIGHT]);
-		}
-		return ride;
+		return pThis->GetRideHeight(idx);
 	}
 	float __thiscall GetWheelRadius(uintptr_t ptr, unsigned int idx) {
 		ICHASSIS_FUNCTION_LOG("GetWheelRadius");

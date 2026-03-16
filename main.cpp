@@ -147,12 +147,6 @@ void DebugMenu() {
 			auto ply = VEHICLE_LIST::GetList(VEHICLE_PLAYERS)[0];
 
 			if (auto cust = ply->GetCustomizations()) {
-				// engine -1.0 1.0 tune 2, -1 torque 1 horsepower
-				// suspension -1.0 1.0 tune 3, -1 soft 1 stiff
-				// drivetrain -1.0 1.0 tune 1, -1 accel 1 top speed
-				// tires -1.0 1.0 tune 4, -1 loose 1 grip
-				// nitrous -1.0 1.0 tune 0, -1 strength 1 duration
-
 				for (int i = 0; i < 32; i++) {
 					DrawMenuOption(std::format("tune {} {:.2f}", i, ply->GetCustomizations()->PhysicsTuning[i]));
 				}

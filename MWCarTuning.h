@@ -563,7 +563,10 @@ float GetPhysicsTuningValue(float in, float max) {
 	return (in * max) + 1.0;
 }
 
-void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
+void GetLerpedCarTuning(MWCarTuning& out, const std::string& carName, const VehicleCustomizations* cust) {
+	auto pvehicle = Attrib::Gen::pvehicle(Attrib::StringHash32(carName.c_str()));
+	auto model = (std::string)GetCarTypeInfoFromHash(bStringHash(pvehicle.GetLayout()->MODEL.mString))->CarTypeName;
+	std::transform(model.begin(), model.end(), model.begin(), [](unsigned char c){ return std::tolower(c); });
 	if (cust) {
 		float brake = GetPerformanceKitModifier(cust, CARSLOTID_TIRE_PACKAGE); // todo are brake upgrades not a thing here?
 		float drivetrain = GetPerformanceKitModifier(cust, CARSLOTID_DRIVETRAIN_PACKAGE);
@@ -585,7 +588,7 @@ void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const Vehicl
 			if (out.GEAR_RATIO.size() > G_FOURTH) out.GEAR_RATIO[G_FOURTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_4], -0.1));
 			if (out.GEAR_RATIO.size() > G_FIFTH) out.GEAR_RATIO[G_FIFTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_5], -0.1));
 			if (out.GEAR_RATIO.size() > G_SIXTH) out.GEAR_RATIO[G_SIXTH] *= (GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_6], -0.1));
-			out.FINAL_GEAR *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_FINAL], 0.1);
+			out.FINAL_GEAR *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::GEAR_RATIO_FINAL], -0.1);
 
 			// suspension tunings
 			out.SWAYBAR_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_ROLL_BAR_STIFFNESS], -0.1);
