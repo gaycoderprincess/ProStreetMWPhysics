@@ -378,29 +378,6 @@ BluePrintType GetEventType() {
 	return BLUEPRINT_GRIP;
 }
 
-// track
-// track
-// track_highend
-// driftlow
-// drifthigh
-// track
-// draghpfall
-// track
-// highendscgrip
-
-Attrib::Collection* GetPVehicleCollection(uint32_t pvehicle) {
-	auto carCollection = Attrib::FindCollection(Attrib::StringHash32("pvehicle"), pvehicle);
-	if (!carCollection) return nullptr;
-
-	for (int i = 0; i < 9; i++) {
-		if (auto type = (uint32_t*)Attrib::Collection::GetData(carCollection, Attrib::StringHash32("vehicle"), i)) {
-			WriteLog(std::format("{:X} {:X}", type[0], type[1]));
-			return Attrib::FindCollection(type[0], type[1]);
-		}
-	}
-	return nullptr;
-}
-
 int GetVehicleKitCount(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
 	auto typeInfo = GetCarTypeInfoFromHash(cust->Type);
 	auto carHash = Attrib::StringToLowerCaseKey(typeInfo->CarTypeName);
