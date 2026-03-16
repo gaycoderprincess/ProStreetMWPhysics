@@ -411,9 +411,6 @@ class EngineRacer : public VehicleBehavior {
 	float GetMaxSpeedometer() const;
 	float GetShiftPoint(GearID from_gear, GearID to_gear) const;
 
-	// IAttributeable
-	void OnAttributeChange(const Attrib::Collection *collection, unsigned int attribkey);
-
 	// ITiptronic
 	bool SportShift(GearID gear);
 

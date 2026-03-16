@@ -10,9 +10,7 @@ void* NewChassisVTable[] = {
 		(void*)&ChassisMW::OnPause,
 		(void*)&ChassisMW::OnUnPause,
 		(void*)&ChassisMW::OnDebugDraw,
-		(void*)&ChassisMW::CalculateUndersteerFactor,
-		(void*)&ChassisMW::CalculateOversteerFactor,
-		(void*)&ChassisMW::GetDownCoefficient,
+		(void*)0xDEADBEEF, // purecall
 };
 
 void ChassisMW::Destroy(char a2) {

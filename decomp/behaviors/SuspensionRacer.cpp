@@ -10,12 +10,7 @@ void* NewSuspensionRacerVTable[] = {
 		(void*)&SuspensionRacerMW::OnPause,
 		(void*)&SuspensionRacerMW::OnUnPause,
 		(void*)&SuspensionRacerMW::OnDebugDraw,
-		(void*)&SuspensionRacerMW::CalculateUndersteerFactor,
-		(void*)&SuspensionRacerMW::CalculateOversteerFactor,
-		(void*)&SuspensionRacerMW::GetDownCoefficient,
 		(void*)&SuspensionRacerMW::GetDynamicRideHeight,
-		(void*)&SuspensionRacerMW::GetDriftValue,
-		(void*)&SuspensionRacerMW::ApplyVehicleEntryForces,
 };
 
 void SuspensionRacerMW::Create(const BehaviorParams &bp) {
@@ -584,6 +579,9 @@ UMath::Vector3* SuspensionRacerMW::GetWheelCenterPos(UMath::Vector3* result, uns
 
 void SuspensionRacerMW::Reset() {
 	SUSPENSIONRACER_FUNCTION_LOG("Reset");
+
+	// redo tunings in the case of gamemode change
+	GetLerpedCarTuning(*mMWAttributes, GetVehicle()->GetVehicleName(), GetVehicle()->GetDriverClass() == DRIVER_HUMAN ? GetVehicle()->GetCustomizations() : nullptr);
 
 	ISimable *owner = GetOwner();
 	UMath::Vector3 vUp;

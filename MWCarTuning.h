@@ -367,8 +367,94 @@ int GetPerformanceKitNum(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
 	return db.kitNum;
 }
 
+BluePrintType GetEventType() {
+	if (GRaceStatus::fObj && GRaceStatus::fObj->mRaceParms) {
+		auto raceType = GRaceParameters::GetRaceType(GRaceStatus::fObj->mRaceParms);
+		if (raceType >= GRace::kRaceType_Grip_Min && raceType < GRace::kRaceType_Grip_Max) return BLUEPRINT_GRIP;
+		if (raceType >= GRace::kRaceType_P2P_Min && raceType < GRace::kRaceType_P2P_Max) return BLUEPRINT_SPEED_CHALLENGE;
+		if (raceType >= GRace::kRaceType_Drag_Min && raceType < GRace::kRaceType_Drag_Max) return BLUEPRINT_DRAG;
+		if (raceType >= GRace::kRaceType_Drift_Min && raceType < GRace::kRaceType_Drift_Max) return BLUEPRINT_DRIFT;
+	}
+	return BLUEPRINT_GRIP;
+}
+
+// track
+// track
+// track_highend
+// driftlow
+// drifthigh
+// track
+// draghpfall
+// track
+// highendscgrip
+
+Attrib::Collection* GetPVehicleCollection(uint32_t pvehicle) {
+	auto carCollection = Attrib::FindCollection(Attrib::StringHash32("pvehicle"), pvehicle);
+	if (!carCollection) return nullptr;
+
+	for (int i = 0; i < 9; i++) {
+		if (auto type = (uint32_t*)Attrib::Collection::GetData(carCollection, Attrib::StringHash32("vehicle"), i)) {
+			WriteLog(std::format("{:X} {:X}", type[0], type[1]));
+			return Attrib::FindCollection(type[0], type[1]);
+		}
+	}
+	return nullptr;
+}
+
+int GetVehicleKitCount(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
+	auto typeInfo = GetCarTypeInfoFromHash(cust->Type);
+	auto carHash = Attrib::StringToLowerCaseKey(typeInfo->CarTypeName);
+
+	auto car = Attrib::Gen::car(carHash);
+	auto car_parts = Attrib::Gen::car_parts(car.GetLayout()->parts.mCollectionKey);
+
+	switch (type) {
+		case CARSLOTID_DRIVETRAIN_PACKAGE: {
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->drivetrain_package.parts.mArray[0].mCollectionKey);
+			return car_part.GetLayout()->kit_max;
+		};
+		case CARSLOTID_ENGINE_PACKAGE: {
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->engine_package.parts.mArray[0].mCollectionKey);
+			return car_part.GetLayout()->kit_max;
+		};
+		case CARSLOTID_FORCED_INDUCTION_PACKAGE: {
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->forced_induction_package.parts.mArray[0].mCollectionKey);
+			return car_part.GetLayout()->kit_max;
+		};
+		case CARSLOTID_NITROUS_PACKAGE: {
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->nitrous_package.parts.mArray[0].mCollectionKey);
+			return car_part.GetLayout()->kit_max;
+		};
+		case CARSLOTID_SUSPENSION_PACKAGE: {
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->suspension_package.parts.mArray[0].mCollectionKey);
+			return car_part.GetLayout()->kit_max;
+		};
+		case CARSLOTID_TIRE_PACKAGE: {
+			// todo is this wrong? it reports 12 but the max is 4
+			auto car_part = Attrib::Gen::car_part(car_parts.GetLayout()->tire_package.parts.mArray[0].mCollectionKey);
+			return std::min(car_part.GetLayout()->kit_max, 4);
+		};
+		default:
+			return 0;
+	}
+}
+
+float GetPerformanceKitModifier(const VehicleCustomizations* cust, CAR_SLOT_ID type) {
+	float kitNum = GetPerformanceKitNum(cust, type);
+	float kitCount = GetVehicleKitCount(cust, type);
+	WriteLog(std::format("type {} kitNum {} kitCount {}", (int)type, kitNum, kitCount));
+	if (type == CARSLOTID_NITROUS_PACKAGE) {
+		return kitNum / kitCount;
+	}
+	else {
+		return (kitNum + 1.0) / (kitCount + 1.0);
+	}
+}
+
 // this is insanely stupid but PVehicles don't have the full VehicleCustomizations, so things like PhysicsTuning aren't in there
 VehicleCustomizations* GetCustomizationWithTheseParts(uint32_t carType, const int16_t* parts) {
+	if (SkipFE) return nullptr;
+
 	auto cars = &UserProfile::spUserProfiles[0]->mCarStable;
 
 	std::vector<VehicleCustomizations*> customizations;
@@ -386,18 +472,111 @@ VehicleCustomizations* GetCustomizationWithTheseParts(uint32_t carType, const in
 	}
 
 	for (auto& target : customizations) {
+		if (target->bluePrintType != GetEventType()) continue;
+
+		if (parts[CARSLOTID_TIRE_PACKAGE] != target->InstalledParts[CARSLOTID_TIRE_PACKAGE]) continue;
+		if (parts[CARSLOTID_DRIVETRAIN_PACKAGE] != target->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE]) continue;
+		if (parts[CARSLOTID_DRIVETRAIN_PACKAGE] != target->InstalledParts[CARSLOTID_DRIVETRAIN_PACKAGE]) continue;
+		if (parts[CARSLOTID_FORCED_INDUCTION_PACKAGE] != target->InstalledParts[CARSLOTID_FORCED_INDUCTION_PACKAGE]) continue;
+		if (parts[CARSLOTID_NITROUS_PACKAGE] != target->InstalledParts[CARSLOTID_NITROUS_PACKAGE]) continue;
+		if (parts[CARSLOTID_SUSPENSION_PACKAGE] != target->InstalledParts[CARSLOTID_SUSPENSION_PACKAGE]) continue;
+
+		/*
 		bool mismatch = false;
 		for (int i = 0; i < CARSLOTID_NUM; i++) {
+			// body is set by kitNum
+			if (i == CARSLOTID_BODY) continue;
+			if (i == CARSLOTID_BODY_DOORLINE) continue;
+
+			// stuff potentially set by bodykits as well
+			if (i == CARSLOTID_BADGING_BUMPER_SET_FRONT) continue;
+			if (i == CARSLOTID_BADGING_BUMPER_SET_REAR) continue;
+			if (i == CARSLOTID_BADGING_FENDER_FRONT_LEFT) continue;
+			if (i == CARSLOTID_BADGING_FENDER_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_BADGING_FENDER_REAR_LEFT) continue;
+			if (i == CARSLOTID_BADGING_FENDER_REAR_RIGHT) continue;
+			if (i == CARSLOTID_BADGING_TRUNK) continue;
+			if (i == CARSLOTID_BASE) continue;
+			if (i == CARSLOTID_BRAKELIGHT_GLASS_LEFT) continue;
+			if (i == CARSLOTID_BRAKELIGHT_GLASS_RIGHT) continue;
+			if (i == CARSLOTID_BRAKELIGHT_LEFT) continue;
+			if (i == CARSLOTID_BRAKELIGHT_RIGHT) continue;
+			if (i == CARSLOTID_BUMPER_FRONT) continue;
+			if (i == CARSLOTID_BUMPER_FRONT_EXTRA) continue;
+			if (i == CARSLOTID_BUMPER_REAR) continue;
+			if (i == CARSLOTID_BUMPER_REAR_EXTRA) continue;
+			if (i == CARSLOTID_DOOR_LEFT) continue;
+			if (i == CARSLOTID_DOOR_REAR_LEFT) continue;
+			if (i == CARSLOTID_DOOR_REAR_RIGHT) continue;
+			if (i == CARSLOTID_DOOR_RIGHT) continue;
+			if (i == CARSLOTID_DOORHANDLE_FRONT_LEFT) continue;
+			if (i == CARSLOTID_DOORHANDLE_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_DOORHANDLE_REAR_LEFT) continue;
+			if (i == CARSLOTID_DOORHANDLE_REAR_RIGHT) continue;
+			if (i == CARSLOTID_DRIVER) continue;
+			if (i == CARSLOTID_ENGINE) continue;
+			if (i == CARSLOTID_EXHAUST) continue;
+			if (i == CARSLOTID_FENDER_FRONT_LEFT) continue;
+			if (i == CARSLOTID_FENDER_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_HEADLIGHT_GLASS_LEFT) continue;
+			if (i == CARSLOTID_HEADLIGHT_GLASS_RIGHT) continue;
+			if (i == CARSLOTID_HEADLIGHT_LEFT) continue;
+			if (i == CARSLOTID_HEADLIGHT_RIGHT) continue;
+
+			// brakes are set by performance
 			if (i == CARSLOTID_BRAKE_CALIPER_FRONT) continue;
 			if (i == CARSLOTID_BRAKE_CALIPER_REAR) continue;
 			if (i == CARSLOTID_BRAKE_ROTOR_FRONT) continue;
 			if (i == CARSLOTID_BRAKE_ROTOR_REAR) continue;
+
+			// damage parts
+			if (i == CARSLOTID_DAMAGE_BODY) continue;
+			if (i == CARSLOTID_DAMAGE_BRAKELIGHT_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_BRAKELIGHT_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_BUMPER_FRONT) continue;
+			if (i == CARSLOTID_DAMAGE_BUMPER_REAR) continue;
+			if (i == CARSLOTID_DAMAGE_DOOR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_DOOR_REAR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_DOOR_REAR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_DOOR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_FENDER_FRONT_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_FENDER_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_HEADLIGHT_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_HEADLIGHT_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_HOOD) continue;
+			if (i == CARSLOTID_DAMAGE_SIDEMIRROR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_SIDEMIRROR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_TRUNK) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_BUMPER_FRONT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_BUMPER_REAR) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_DOOR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_DOOR_REAR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_DOOR_REAR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_DOOR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_FENDER_FRONT_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_WIDEBODY_FENDER_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_FRONT) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_FRONT_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_FRONT_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_REAR) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_REAR_LEFT) continue;
+			if (i == CARSLOTID_DAMAGE_WINDOW_REAR_RIGHT) continue;
+			if (i == CARSLOTID_DAMAGE0_FRONT) continue;
+			if (i == CARSLOTID_DAMAGE0_FRONTLEFT) continue;
+			if (i == CARSLOTID_DAMAGE0_FRONTRIGHT) continue;
+			if (i == CARSLOTID_DAMAGE0_REAR) continue;
+			if (i == CARSLOTID_DAMAGE0_REARLEFT) continue;
+			if (i == CARSLOTID_DAMAGE0_REARRIGHT) continue;
 			if (parts[i] != target->InstalledParts[i]) {
+				WriteLog(std::format("parts[{}] {} != InstalledParts[{}] {}", i, parts[i], i, target->InstalledParts[i]));
 				mismatch = true;
 				break;
 			}
 		}
 		if (mismatch) continue;
+		*/
+
 		return target;
 	}
 	return nullptr;
@@ -409,13 +588,13 @@ float GetPhysicsTuningValue(float in, float max) {
 
 void GetLerpedCarTuning(MWCarTuning& out, const std::string& model, const VehicleCustomizations* cust) {
 	if (cust) {
-		float brake = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0; // todo are brake upgrades not a thing here?
-		float drivetrain = (GetPerformanceKitNum(cust, CARSLOTID_DRIVETRAIN_PACKAGE) + 1) / 7.0;
-		float engine = (GetPerformanceKitNum(cust, CARSLOTID_ENGINE_PACKAGE) + 1) / 7.0;
-		float induction = (GetPerformanceKitNum(cust, CARSLOTID_FORCED_INDUCTION_PACKAGE) + 1) / 7.0;
-		float nitro = GetPerformanceKitNum(cust, CARSLOTID_NITROUS_PACKAGE) / 6.0;
-		float suspension = (GetPerformanceKitNum(cust, CARSLOTID_SUSPENSION_PACKAGE) + 1) / 7.0;
-		float tire = (GetPerformanceKitNum(cust, CARSLOTID_TIRE_PACKAGE) + 1) / 5.0;
+		float brake = GetPerformanceKitModifier(cust, CARSLOTID_TIRE_PACKAGE); // todo are brake upgrades not a thing here?
+		float drivetrain = GetPerformanceKitModifier(cust, CARSLOTID_DRIVETRAIN_PACKAGE);
+		float engine = GetPerformanceKitModifier(cust, CARSLOTID_ENGINE_PACKAGE);
+		float induction = GetPerformanceKitModifier(cust, CARSLOTID_FORCED_INDUCTION_PACKAGE);
+		float nitro = GetPerformanceKitModifier(cust, CARSLOTID_NITROUS_PACKAGE);
+		float suspension = GetPerformanceKitModifier(cust, CARSLOTID_SUSPENSION_PACKAGE);
+		float tire = GetPerformanceKitModifier(cust, CARSLOTID_TIRE_PACKAGE);
 		GetLerpedCarTuning(out, model, brake, drivetrain, engine, induction, nitro, suspension, tire);
 
 		if (auto real = GetCustomizationWithTheseParts(cust->Type, cust->InstalledParts)) {

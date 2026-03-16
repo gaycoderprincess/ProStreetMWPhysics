@@ -10,11 +10,7 @@ void* NewSuspensionSimpleMWVTable[] = {
 		(void*)&SuspensionSimpleMW::OnPause,
 		(void*)&SuspensionSimpleMW::OnUnPause,
 		(void*)&SuspensionSimpleMW::OnDebugDraw,
-		(void*)&SuspensionSimpleMW::CalculateUndersteerFactor,
-		(void*)&SuspensionSimpleMW::CalculateOversteerFactor,
-		(void*)&SuspensionSimpleMW::GetDownCoefficient,
-		(void*)&SuspensionSimpleMW::GetDriftValue,
-		(void*)&SuspensionSimpleMW::ApplyVehicleEntryForces,
+		(void*)0xDEADBEEF, // purecall
 };
 
 void SuspensionSimpleMW::CreateTires() {

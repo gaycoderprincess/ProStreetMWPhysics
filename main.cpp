@@ -65,6 +65,26 @@ auto ctor_cartuning = (void(__stdcall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD5
 
 #define GET_FAKE_INTERFACE(base, type, var) { auto ptr = (uintptr_t)this; ptr += offsetof(base, var); return (type*)ptr; }
 
+void UpdatePerfectLaunchText() {
+	auto& list = VEHICLE_LIST::GetList(VEHICLE_PLAYERS);
+	if (list.empty()) return;
+
+	auto ply = VEHICLE_LIST::GetList(VEHICLE_PLAYERS)[0];
+	if (!ply) return;
+
+	const char* text = ply->GetPerfectLaunch() > 0.0 ? "PERFECT LAUNCH!" : "GO!";
+
+	for (int i = 0; i < EA::Localizer::LocalizerManager::mMaxCategories; i++) {
+		auto category = &EA::Localizer::LocalizerManager::mCategories[i];
+		for (int j = 0; j < category->mNumberStringRecords; j++) {
+			auto record = &category->mRecordTables[j];
+			if (record->mHash == 0x61223AB5) {
+				record->mPackedString = text;
+			}
+		}
+	}
+}
+
 #include "decomp/ConversionUtil.hpp"
 #include "decomp/UMathExtras.h"
 #include "decomp/AverageWindow.h"
@@ -271,6 +291,14 @@ void DebugMenu() {
 }
 
 auto oldctorbase = (void*(__thiscall*)(void*, BehaviorParams*, int))0x71CE50;
+SuspensionSimpleMW* SuspensionSimpleConstruct(BehaviorParams* bp) {
+	auto data = (SuspensionSimpleMW*)gFastMem.Alloc(sizeof(SuspensionSimpleMW), nullptr);
+	memset(data,0,sizeof(SuspensionSimpleMW));
+	oldctorbase(data, bp, 0);
+	data->Create(*bp);
+	return data;
+}
+
 SuspensionRacerMW* SuspensionRacerConstruct(BehaviorParams* bp) {
 	auto data = pSuspension = (SuspensionRacerMW*)gFastMem.Alloc(sizeof(SuspensionRacerMW), nullptr);
 	memset(data,0,sizeof(SuspensionRacerMW));
@@ -303,6 +331,7 @@ public:
 	}
 };
 FactoryEntry __EngineRacerMW("EngineRacerMW", (void*)&EngineRacerConstruct);
+FactoryEntry __SuspensionSimpleMW("SuspensionSimpleMW", (void*)&SuspensionSimpleConstruct);
 FactoryEntry __SuspensionRacerMW("SuspensionRacerMW", (void*)&SuspensionRacerConstruct);
 
 bool bEnabledGrip = true;
@@ -456,6 +485,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 			NyaHooks::WorldServiceHook::Init();
 			NyaHooks::WorldServiceHook::aPreFunctions.push_back(AssistLoop);
 			NyaHooks::WorldServiceHook::aPreFunctions.push_back(SpeedbreakerLoop);
+			NyaHooks::WorldServiceHook::aPreFunctions.push_back(UpdatePerfectLaunchText);
 
 			ChloeMenuLib::RegisterMenu("MW Physics Debug Menu", &DebugMenu);
 

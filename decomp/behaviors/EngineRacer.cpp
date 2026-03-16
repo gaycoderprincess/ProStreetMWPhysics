@@ -162,9 +162,12 @@ bool EngineRacer::Blow() {
 	return false;
 }
 
-void EngineRacer::OnAttributeChange(const Attrib::Collection *collection, unsigned int attribkey) {}
-
 void EngineRacer::Reset() {
+	ENGINERACER_FUNCTION_LOG("Reset");
+
+	// redo tunings in the case of gamemode change
+	GetLerpedCarTuning(*mMWInfo, GetVehicle()->GetVehicleName(), GetVehicle()->GetDriverClass() == DRIVER_HUMAN ? GetVehicle()->GetCustomizations() : nullptr);
+
 	mDriveTorque = 0.0f;
 	mDriveTorqueAtEngine = 0.0f;
 	mAngularVelocity = RPM2RPS(mMWInfo->IDLE);
@@ -782,6 +785,8 @@ void EngineRacer::OnTaskSimulate(float dT) {
 	if (mSuspension->GetNumWheels() != 4) {
 		return;
 	}
+
+	UpdatePerfectLaunchText();
 
 	const Physics::Tunings *tunings = GetVehicleTunings();
 	bool is_staging = GetVehicle()->IsStaging();
