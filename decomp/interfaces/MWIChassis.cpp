@@ -1,7 +1,32 @@
 namespace MWIChassis {
-	SuspensionRacer* GetSuspensionRacer(uintptr_t ptr) {
-		ptr -= offsetof(SuspensionRacer, tmpChassis);
-		return (SuspensionRacer*)ptr;
+	// this is horrible but vtables don't work with the way i have this set up
+	ChassisMW* GetChassis(uintptr_t ptr) {
+		ptr -= offsetof(ChassisMW, tmpChassis);
+		return (ChassisMW*)ptr;
+	}
+
+	bool IsChassisSimple(uintptr_t ptr) {
+		return !strcmp(GetChassis(ptr)->mChassisType, "SuspensionSimple");
+	}
+
+	SuspensionSimpleMW* GetSuspensionSimple(uintptr_t ptr) {
+		if (strcmp(GetChassis(ptr)->mChassisType, "SuspensionSimple")) {
+			MessageBoxA(nullptr, std::format("GetSuspensionSimple() wrong type! Called from {:X}", (uintptr_t)__builtin_return_address(0)).c_str(), "nya?!~", MB_ICONERROR);
+			__debugbreak();
+		}
+		static_assert(offsetof(SuspensionSimpleMW, tmpChassis) == offsetof(ChassisMW, tmpChassis));
+		ptr -= offsetof(SuspensionSimpleMW, tmpChassis);
+		return (SuspensionSimpleMW*)ptr;
+	}
+
+	SuspensionRacerMW* GetSuspensionRacer(uintptr_t ptr) {
+		if (strcmp(GetChassis(ptr)->mChassisType, "SuspensionRacer")) {
+			MessageBoxA(nullptr, std::format("GetSuspensionRacer() wrong type! Called from {:X}", (uintptr_t)__builtin_return_address(0)).c_str(), "nya?!~", MB_ICONERROR);
+			__debugbreak();
+		}
+		static_assert(offsetof(SuspensionRacerMW, tmpChassis) == offsetof(ChassisMW, tmpChassis));
+		ptr -= offsetof(SuspensionRacerMW, tmpChassis);
+		return (SuspensionRacerMW*)ptr;
 	}
 
 	float __thiscall GetWheelTraction(uintptr_t ptr, unsigned int);
@@ -128,12 +153,12 @@ namespace MWIChassis {
 	const UMath::Vector3 *__thiscall GetWheelPos(uintptr_t ptr, unsigned int i) {
 		ICHASSIS_FUNCTION_LOG("GetWheelPos");
 		auto pThis = GetSuspensionRacer(ptr);
-		return &pThis->GetWheelPos(i);
+		return pThis->GetWheelPos(i);
 	}
 	const UMath::Vector3 *__thiscall GetWheelLocalPos(uintptr_t ptr, unsigned int i) {
 		ICHASSIS_FUNCTION_LOG("GetWheelLocalPos");
 		auto pThis = GetSuspensionRacer(ptr);
-		return &pThis->GetWheelLocalPos(i);
+		return pThis->GetWheelLocalPos(i);
 	}
 	UMath::Vector3 *__thiscall GetWheelCenterPos(uintptr_t ptr, UMath::Vector3 *result, unsigned int i) {
 		ICHASSIS_FUNCTION_LOG("GetWheelCenterPos");
@@ -184,7 +209,7 @@ namespace MWIChassis {
 		float compression = 0.0f;
 		if (downforce < 0.0f) {
 			unsigned int axle = id / 2;
-			float spring_weight = LBIN2NM(pThis->mMWInfo->SPRING_STIFFNESS.At(axle));
+			float spring_weight = LBIN2NM(pThis->mMWAttributes->SPRING_STIFFNESS.At(axle));
 			downforce *= 0.25f;
 			compression = -downforce / spring_weight;
 		}
@@ -228,7 +253,7 @@ namespace MWIChassis {
 	const UMath::Vector4* __thiscall GetWheelRoadNormal(uintptr_t ptr, unsigned int id) {
 		ICHASSIS_FUNCTION_LOG("GetWheelRoadNormal");
 		auto pThis = GetSuspensionRacer(ptr);
-		return &pThis->GetWheelRoadNormal(id);
+		return pThis->GetWheelRoadNormal(id);
 	}
 	const SimSurface* __thiscall GetWheelRoadSurface(uintptr_t ptr, unsigned int id) {
 		ICHASSIS_FUNCTION_LOG("GetWheelRoadSurface");
@@ -238,7 +263,7 @@ namespace MWIChassis {
 	const UMath::Vector3* __thiscall GetWheelVelocity(uintptr_t ptr, unsigned int id) {
 		ICHASSIS_FUNCTION_LOG("GetWheelVelocity");
 		auto pThis = GetSuspensionRacer(ptr);
-		return &pThis->GetWheelVelocity(id);
+		return pThis->GetWheelVelocity(id);
 	}
 	int __thiscall GetNumWheelsOnGround(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetNumWheelsOnGround");
@@ -254,7 +279,7 @@ namespace MWIChassis {
 	float __thiscall GetWheelAngularVelocity(uintptr_t ptr, int index) {
 		ICHASSIS_FUNCTION_LOG("GetWheelAngularVelocity");
 		auto pThis = GetSuspensionRacer(ptr);
-		SuspensionRacer::Tire *tire = pThis->mTires[index];
+		auto tire = pThis->mTires[index];
 		if (tire->IsBrakeLocked()) {
 			return 0.0f;
 		}
@@ -285,7 +310,7 @@ namespace MWIChassis {
 	float __thiscall GetSuspensionDigression(uintptr_t ptr, unsigned int i) { // todo is this correct
 		ICHASSIS_FUNCTION_LOG("GetSuspensionDigression");
 		auto pThis = GetSuspensionRacer(ptr);
-		return 1.0f - pThis->mMWInfo->SHOCK_DIGRESSION.At(IsRear(i));
+		return 1.0f - pThis->mMWAttributes->SHOCK_DIGRESSION.At(IsRear(i));
 	}
 	float __thiscall GetWheelLateralForce(uintptr_t ptr, unsigned int i) {
 		ICHASSIS_FUNCTION_LOG("GetWheelLateralForce");
@@ -296,7 +321,7 @@ namespace MWIChassis {
 		ICHASSIS_FUNCTION_LOG("GetRideHeight");
 		auto pThis = GetSuspensionRacer(ptr);
 		float ride = pThis->GetRideHeight(idx);
-		const Physics::Tunings *tunings = pThis->GetVehicleTunings();
+		const Physics::Tunings *tunings = GetVehicleMWTunings(pThis->GetVehicle());
 		if (tunings) {
 			ride += INCH2METERS(tunings->Value[Physics::Tunings::RIDEHEIGHT]);
 		}
@@ -325,7 +350,7 @@ namespace MWIChassis {
 	float __thiscall GetRenderMotion(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetRenderMotion");
 		auto pThis = GetSuspensionRacer(ptr);
-		return pThis->mMWInfo->RENDER_MOTION;
+		return pThis->mMWAttributes->RENDER_MOTION;
 	}
 	ISteeringWheel::SteeringType __thiscall GetSteeringType(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetSteeringType");
@@ -371,37 +396,37 @@ namespace MWIChassis {
 	}
 	bool __thiscall IsAntiBrakeLockOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("1"); return false; }
 	int __thiscall GetAntiBrakeLockLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("2"); return 0; }
-	void __thiscall SetAntiBrakeLockLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("3"); return; }
+	void __thiscall SetAntiBrakeLockLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("3"); }
 	bool __thiscall IsStabilityManagementOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("4"); return false; }
 	int __thiscall GetStabilityManagementLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("5"); return 0; }
-	void __thiscall SetStabilityManagementLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("6"); return; }
+	void __thiscall SetStabilityManagementLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("6"); }
 	bool __thiscall IsDriftAsssistOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("7"); return false; }
 	int __thiscall GetDriftAssistLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("8"); return 0; }
-	void __thiscall SetDriftAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("9"); return; }
+	void __thiscall SetDriftAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("9"); }
 	bool __thiscall IsDriftGlueToRoadOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("10"); return false; }
 	int __thiscall GetDriftGlueToRoadLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("11"); return 0; }
-	void __thiscall SetDriftGlueToRoadLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("12"); return; }
+	void __thiscall SetDriftGlueToRoadLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("12"); }
 	bool __thiscall IsDriftDynamicBrakeOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("13"); return false; }
 	int __thiscall GetDriftDynamicBrakeLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("14"); return 0; }
-	void __thiscall SetDriftDynamicBrakeLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("15"); return; }
+	void __thiscall SetDriftDynamicBrakeLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("15"); }
 	bool __thiscall IsDriftSpeedControlOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("16"); return false; }
 	int __thiscall GetDriftSpeedControlLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("17"); return 0; }
-	void __thiscall SetDriftSpeedControlLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("18"); return; }
+	void __thiscall SetDriftSpeedControlLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("18"); }
 	bool __thiscall IsRacelineAssistOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("19"); return false; }
 	int __thiscall GetRacelineAssistLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("20"); return 0; }
-	void __thiscall SetRacelineAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("21"); return; }
+	void __thiscall SetRacelineAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("21"); }
 	bool __thiscall IsBrakingAssistOn(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("22"); return false; }
 	int __thiscall GetBrakingAssistLevel(uintptr_t ptr) { ICHASSIS_FUNCTION_LOG("23"); return 0; }
-	void __thiscall SetBrakingAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("24"); return; }
+	void __thiscall SetBrakingAssistLevel(uintptr_t ptr, int i) { ICHASSIS_FUNCTION_LOG("24"); }
 	float __thiscall GetDragCoefficient(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetDragCoefficient");
 		auto pThis = GetSuspensionRacer(ptr);
-		return pThis->mMWInfo->DRAG_COEFFICIENT;
+		return pThis->mMWAttributes->DRAG_COEFFICIENT;
 	}
 	float __thiscall GetDownCoefficient(uintptr_t ptr) {
 		ICHASSIS_FUNCTION_LOG("GetDownCoefficient");
 		auto pThis = GetSuspensionRacer(ptr);
-		return pThis->mMWInfo->AERO_COEFFICIENT;
+		return pThis->mMWAttributes->AERO_COEFFICIENT;
 	}
 	float __thiscall GetStaticGripForSpeed(uintptr_t ptr, float f) { // todo
 		ICHASSIS_FUNCTION_LOG("GetStaticGripForSpeed");

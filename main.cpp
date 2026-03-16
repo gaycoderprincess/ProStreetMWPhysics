@@ -71,8 +71,11 @@ auto ctor_cartuning = (void(__stdcall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD5
 
 #include "MWCarTuning.h"
 
-#include "decomp/behaviors/EngineRacer.h"
+#include "decomp/behaviors/MWWheel.h"
+#include "decomp/behaviors/MWChassisBase.h"
 #include "decomp/behaviors/SuspensionRacer.h"
+#include "decomp/behaviors/SuspensionSimple.h"
+#include "decomp/behaviors/EngineRacer.h"
 #include "decomp/interfaces/MWIChassis.cpp"
 #include "decomp/interfaces/MWIRaceEngine.cpp"
 #include "decomp/interfaces/MWITiptronic.cpp"
@@ -80,7 +83,10 @@ auto ctor_cartuning = (void(__stdcall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD5
 #include "decomp/interfaces/MWIInductable.cpp"
 #include "decomp/interfaces/MWITransmission.cpp"
 #include "decomp/interfaces/MWIEngine.cpp"
+#include "decomp/behaviors/MWWheel.cpp"
+#include "decomp/behaviors/MWChassisBase.cpp"
 #include "decomp/behaviors/SuspensionRacer.cpp"
+#include "decomp/behaviors/SuspensionSimple.cpp"
 #include "decomp/behaviors/EngineRacer.cpp"
 
 void ValueEditorMenu(float& value) {
@@ -102,31 +108,6 @@ void ValueEditorMenu(float& value) {
 void QuickValueEditor(const char* name, float& value) {
 	if (DrawMenuOption(std::format("{} - {}", name, value))) { ValueEditorMenu(value); }
 }
-
-// whatever highway is in uc:
-// LATERAL_GRIP 1
-// DRIVE_GRIP 0.1
-// ROLLING_RESISTANCE 0.13
-
-// asphalt_no_leaves uc:
-// LATERAL_GRIP 1
-// DRIVE_GRIP 1
-// ROLLING_RESISTANCE 0
-
-// asphalt_no_leaves mw:
-// LATERAL_GRIP 1
-// DRIVE_GRIP 1
-// ROLLING_RESISTANCE 1
-
-// DoDriveForces is almost entirely responsible for acceleration in MW, without it the car just rolls
-
-// rx7 mw:
-// mass 1280
-// tensor scale 1.0 3.5 1.0
-
-// rx7 uc:
-// mass 1270
-// tensor scale 1.2 1.6 1.2
 
 void DebugMenu() {
 	ChloeMenuLib::BeginMenu();
@@ -206,15 +187,15 @@ void DebugMenu() {
 		}
 		DrawMenuOption(std::format("steer_type {}", (int)steer_type));
 
-		DrawMenuOption(std::format("RIM_SIZE.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->RIM_SIZE.Front));
-		DrawMenuOption(std::format("RIM_SIZE.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->RIM_SIZE.Rear));
-		DrawMenuOption(std::format("WHEEL_BASE {:.2f}", pSuspension->mCarInfo.GetLayout()->WHEEL_BASE));
-		DrawMenuOption(std::format("TRACK_WIDTH.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->TRACK_WIDTH.Front));
-		DrawMenuOption(std::format("TRACK_WIDTH.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->TRACK_WIDTH.Rear));
-		DrawMenuOption(std::format("SECTION_WIDTH.Front {:.2f}", pSuspension->mCarInfo.GetLayout()->SECTION_WIDTH.Front));
-		DrawMenuOption(std::format("SECTION_WIDTH.Rear {:.2f}", pSuspension->mCarInfo.GetLayout()->SECTION_WIDTH.Rear));
-		DrawMenuOption(std::format("FRONT_AXLE {:.2f}", pSuspension->mCarInfo.GetLayout()->FRONT_AXLE));
-		DrawMenuOption(std::format("Layout {:X}", (uintptr_t)pSuspension->mCarInfo.GetLayout()));
+		DrawMenuOption(std::format("RIM_SIZE.Front {:.2f}", pSuspension->mAttributes.GetLayout()->RIM_SIZE.Front));
+		DrawMenuOption(std::format("RIM_SIZE.Rear {:.2f}", pSuspension->mAttributes.GetLayout()->RIM_SIZE.Rear));
+		DrawMenuOption(std::format("WHEEL_BASE {:.2f}", pSuspension->mAttributes.GetLayout()->WHEEL_BASE));
+		DrawMenuOption(std::format("TRACK_WIDTH.Front {:.2f}", pSuspension->mAttributes.GetLayout()->TRACK_WIDTH.Front));
+		DrawMenuOption(std::format("TRACK_WIDTH.Rear {:.2f}", pSuspension->mAttributes.GetLayout()->TRACK_WIDTH.Rear));
+		DrawMenuOption(std::format("SECTION_WIDTH.Front {:.2f}", pSuspension->mAttributes.GetLayout()->SECTION_WIDTH.Front));
+		DrawMenuOption(std::format("SECTION_WIDTH.Rear {:.2f}", pSuspension->mAttributes.GetLayout()->SECTION_WIDTH.Rear));
+		DrawMenuOption(std::format("FRONT_AXLE {:.2f}", pSuspension->mAttributes.GetLayout()->FRONT_AXLE));
+		DrawMenuOption(std::format("Layout {:X}", (uintptr_t)pSuspension->mAttributes.GetLayout()));
 
 		if (auto veh = VEHICLE_LIST::GetList(VEHICLE_PLAYERS)[0]) {
 			DrawMenuOption(std::format("state.speed {:.2f}", LastChassisState.speed));
@@ -290,9 +271,9 @@ void DebugMenu() {
 }
 
 auto oldctorbase = (void*(__thiscall*)(void*, BehaviorParams*, int))0x71CE50;
-SuspensionRacer* SuspensionRacerConstruct(BehaviorParams* bp) {
-	auto data = pSuspension = (SuspensionRacer*)gFastMem.Alloc(sizeof(SuspensionRacer), nullptr);
-	memset(data,0,sizeof(SuspensionRacer));
+SuspensionRacerMW* SuspensionRacerConstruct(BehaviorParams* bp) {
+	auto data = pSuspension = (SuspensionRacerMW*)gFastMem.Alloc(sizeof(SuspensionRacerMW), nullptr);
+	memset(data,0,sizeof(SuspensionRacerMW));
 	oldctorbase(data, bp, 0);
 	data->Create(*bp);
 	return data;
