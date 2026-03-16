@@ -100,6 +100,8 @@ cp orig_cb_full/skyline.conf skyliner35.conf
 cp orig_cb_full/skyline_top.conf skyliner35_top.conf
 cp orig_mw_full/corvette.conf corvette67.conf
 cp orig_mw_full/corvette_top.conf corvette67_top.conf
+cp orig_mw_full/gti.conf r32.conf
+cp orig_mw_full/gti_top.conf r32_top.conf
 
 cp orig_mw_full/911turbo.conf 997tt_track.conf
 cp orig_mw_full/911turbo_top.conf 997tt_track_top.conf
