@@ -24,7 +24,7 @@ void ChassisMW::Destroy(char a2) {
 
 	mAttributes.dtor();
 
-	dtor_simobject(this); // frees the interface list
+	//dtor_simobject(this); // todo frees the interface list
 
 	WriteLog("SuspensionRacer::Destroy finished");
 }
@@ -43,7 +43,7 @@ void ChassisMW::Create(const BehaviorParams &bp) {
 	mJumpAlititude = 0.0f;
 	mTireHeat = 0.0f;
 
-	ctor_cartuning(&mAttributes, cartuning_LookupKey(&mAttributes, GetOwner(), 0));
+	ctor_cartuning(&mAttributes, cartuning_LookupKey(GetOwner()));
 
 	mMWAttributes = new MWCarTuning;
 	GetLerpedCarTuning(*mMWAttributes, GetVehicle()->GetVehicleName(), GetVehicle()->GetCustomizations());
@@ -161,19 +161,6 @@ float ChassisMW::ComputeTractionScale(const ChassisMW::State &state) {
 	return result;
 }
 
-void RigidBodyDamp(IRigidBody* body, float amount) {
-	UMath::Vector3& linearVel = *(UMath::Vector3*)body->GetLinearVelocity();
-	UMath::Vector3& angularVel = *(UMath::Vector3*)body->GetAngularVelocity();
-	UMath::Vector3& force = *(UMath::Vector3*)body->GetForce();
-	UMath::Vector3& torque = *(UMath::Vector3*)body->GetTorque();
-
-	float scale = 1.0f - amount;
-	UMath::Scale(linearVel, scale, linearVel);
-	UMath::Scale(angularVel, scale, angularVel);
-	UMath::Scale(force, scale, force);
-	UMath::Scale(torque, scale, torque);
-}
-
 ChassisMW::SleepState ChassisMW::DoSleep(const ChassisMW::State &state) {
 	if (state.flags & 1) {
 		return SS_NONE;
@@ -182,9 +169,9 @@ ChassisMW::SleepState ChassisMW::DoSleep(const ChassisMW::State &state) {
 		if ((GetIChassis()->GetNumWheelsOnGround() == GetIChassis()->GetNumWheels()) && (state.brake_input + state.ebrake_input > 0.0f) && (state.gas_input == 0.0f)) {
 			if ((UMath::Length(state.angular_vel) < 0.25f) && (!mRBComplex->HasHadCollision())) {
 				if (state.speed < FLOAT_EPSILON) {
-					RigidBodyDamp(mRB, 1.0f);
+					mRBComplex->Damp(1.0f);
 				} else {
-					RigidBodyDamp(mRB, 1.0f - state.speed);
+					mRBComplex->Damp(1.0f - state.speed);
 				}
 				for (unsigned int i = 0; i < GetIChassis()->GetNumWheels(); ++i) {
 					GetIChassis()->SetWheelAngularVelocity(i, 0.0f);
@@ -197,8 +184,8 @@ ChassisMW::SleepState ChassisMW::DoSleep(const ChassisMW::State &state) {
 		if ((UMath::Length(state.angular_vel) < 0.25f) && (state.gas_input <= 0.0f)) {
 			UMath::Vector3 v = state.local_vel;
 			UMath::Vector3 w = state.local_angular_vel;
-			UMath::Vector3 f = *mRB->GetForce();
-			UMath::Vector3 t = *mRB->GetTorque();
+			UMath::Vector3 f = *mRBComplex->GetForce();
+			UMath::Vector3 t = *mRBComplex->GetTorque();
 			mRB->ConvertWorldToLocal(&f, false);
 			mRB->ConvertWorldToLocal(&t, false);
 
@@ -302,18 +289,17 @@ void ChassisMW::SetCOG(float extra_bias, float extra_ride) {
 	float cg_y = INCH2METERS(mMWAttributes->ROLL_CENTER) - (dim.y + UMath::Max(INCH2METERS(mMWAttributes->RIDE_HEIGHT.At(0) + extra_ride),
 																			  INCH2METERS(mMWAttributes->RIDE_HEIGHT.At(1) + extra_ride)));
 	UMath::Vector3 cog(0.0f, cg_y, cg_z);
-	mRB->SetCenterOfGravity(&cog);
-	mRB->OverrideCOG(&cog);
+	mRBComplex->SetCenterOfGravity(&cog);
 }
 
 void ChassisMW::ComputeState(float dT, ChassisMW::State &state) {
 	state.time = dT;
 	state.flags = 0;
-	state.collider = mRBComplex->GetWCollider();
-	mRB->GetInertiaTensor(&state.inertia);
+	state.collider = mRB->GetWCollider();
+	state.inertia = *mRBComplex->GetInertiaTensor();
 	mRB->GetDimension(&state.dimension);
 
-	state.matrix = *mRB->GetTransform();
+	mRB->GetMatrix4(&state.matrix);
 	state.matrix.p = UMath::Vector4Make(*mRB->GetPosition(), 1.0f);
 
 	state.local_vel = *mRB->GetLinearVelocity();
@@ -335,7 +321,7 @@ void ChassisMW::ComputeState(float dT, ChassisMW::State &state) {
 	state.ebrake_input = mInput->GetControlHandBrake();
 	state.steer_input = UMath::Clamp(mInput->GetControlSteering(), -1.0f, 1.0f);
 
-	state.cog = *mRB->GetCenterOfGravity();
+	state.cog = *mRBComplex->GetCenterOfGravity();
 	state.ground_effect = GetIChassis()->GetNumWheelsOnGround() * 0.25f;
 	state.mass = mRB->GetMass();
 	state.driver_style = GetVehicle()->GetDriverStyle();
@@ -487,8 +473,8 @@ void ChassisMW::DoJumpStabilizer(const ChassisMW::State &state) {
 
 	int nTouching = GetIChassis()->GetNumWheelsOnGround();
 	bool resolve = false;
-	UMath::Vector3 ground_normal = *mRBComplex->GetGroundNormal(); // NOTE: it returns a vec3 but heightaboveground is right after it anyway
-	float altitude = mRBComplex->GetHeightAboveGround();
+	UMath::Vector4 ground_normal = *mRBComplex->GetGroundNormal();
+	float altitude = -ground_normal.w;
 	float ground_dot = UMath::Dot(state.GetUpVector(), UMath::Vector4To3(ground_normal));
 
 	UMath::Vector3 damping_torque = {};

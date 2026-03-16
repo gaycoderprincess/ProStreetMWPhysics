@@ -81,7 +81,7 @@ public:
 	//IDragTransmission *mDragTransmission;
 	IEngineDamage *mEngineDamage;
 	ISpikeable *mSpikeDamage;
-	Attrib::Gen::car_tuning mAttributes;
+	Attrib::Gen::vehicle mAttributes;
 	MWCarTuning* mMWAttributes;
 	float mJumpTime;
 	float mJumpAlititude;

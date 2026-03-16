@@ -53,7 +53,7 @@ void SuspensionSimpleMW::Create(const BehaviorParams &bp) {
 	*(uintptr_t*)this = (uintptr_t)&NewSuspensionSimpleMWVTable;
 
 	GetOwner()->QueryInterface(&mInput);
-	//GetOwner()->QueryInterface(&mCheater);
+	GetOwner()->QueryInterface(&mCheater);
 	mFrictionBoost = 0.0f;
 	mDraft = 0.0f;
 	mPowerSliding = false;
@@ -67,9 +67,9 @@ void SuspensionSimpleMW::Create(const BehaviorParams &bp) {
 	mSleepTime = 0.0f;
 	mDriftPhysics = false;
 
-	tmpCollisionListener = TempCollisionListener();
-	tmpCollisionListener.vtable = &tmpCollisionListener.vt_OnCollision;
-	Sim::Collision::AddListener((Sim::Collision::IListener*)&tmpCollisionListener, GetOwner(), "SuspensionSimpleMW");
+	//tmpCollisionListener = TempCollisionListener();
+	//tmpCollisionListener.vtable = &tmpCollisionListener.vt_OnCollision;
+	//Sim::Collision::AddListener((Sim::Collision::IListener*)&tmpCollisionListener, GetOwner(), "SuspensionSimpleMW"); // todo
 
 	CreateTires();
 }
@@ -77,7 +77,7 @@ void SuspensionSimpleMW::Create(const BehaviorParams &bp) {
 void SuspensionSimpleMW::Destroy(char a2) {
 	SUSPENSIONSIMPLE_FUNCTION_LOG("Destroy");
 
-	Sim::Collision::RemoveListener((Sim::Collision::IListener*)&tmpCollisionListener);
+	//Sim::Collision::RemoveListener((Sim::Collision::IListener*)&tmpCollisionListener); // todo
 
 	for (int i = 0; i < 4; ++i) {
 		WriteLog("delete mTires[i]");
@@ -172,7 +172,9 @@ UMath::Vector3* SuspensionSimpleMW::GetWheelCenterPos(UMath::Vector3* result, un
 	if (!mRBComplex) {
 		return result;
 	}
-	UMath::ScaleAdd(*mRB->GetUpVector(), GetIChassis()->GetWheelRadius(i), *result, *result);
+	UMath::Vector3 tmp;
+	mRB->GetUpVector(&tmp);
+	UMath::ScaleAdd(tmp, GetIChassis()->GetWheelRadius(i), *result, *result);
 	return result;
 }
 
@@ -208,8 +210,9 @@ void SuspensionSimpleMW::OnCollision(const Sim::Collision::Info &cinfo) {
 	}
 	if ((UMath::Abs(cinfo.normal.y) < 0.1f) && (mAgainstWall == 0.0f) && mRBComplex) {
 		if (UMath::Length(cinfo.closingVel) < 7.5f) {
-			const UMath::Vector3 &vFoward = *mRB->GetForwardVector();
-			const UMath::Vector3 &vRight = *mRB->GetRightVector();
+			UMath::Vector3 vFoward, vRight;
+			mRB->GetForwardVector(&vFoward);
+			mRB->GetRightVector(&vRight);
 			float dirdot = UMath::Dot(cinfo.normal, vFoward);
 			if (dirdot <= 0.0f) {
 				UMath::Vector3 rpos;

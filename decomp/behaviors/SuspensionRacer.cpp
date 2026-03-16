@@ -36,9 +36,9 @@ void SuspensionRacerMW::Create(const BehaviorParams &bp) {
 	mBurnOut = Burnout();
 	mSteering = Steering();
 
-	tmpCollisionListener = TempCollisionListener();
-	tmpCollisionListener.vtable = &tmpCollisionListener.vt_OnCollision;
-	Sim::Collision::AddListener((Sim::Collision::IListener*)&tmpCollisionListener, GetOwner(), "SuspensionRacerMW");
+	//tmpCollisionListener = TempCollisionListener();
+	//tmpCollisionListener.vtable = &tmpCollisionListener.vt_OnCollision;
+	//Sim::Collision::AddListener((Sim::Collision::IListener*)&tmpCollisionListener, GetOwner(), "SuspensionRacerMW"); // todo
 
 	for (int i = 0; i < 4; ++i) {
 		mTires[i] = NULL;
@@ -51,7 +51,7 @@ void SuspensionRacerMW::Create(const BehaviorParams &bp) {
 void SuspensionRacerMW::Destroy(char a2) {
 	SUSPENSIONRACER_FUNCTION_LOG("Destroy");
 
-	Sim::Collision::RemoveListener((Sim::Collision::IListener*)&tmpCollisionListener);
+	//Sim::Collision::RemoveListener((Sim::Collision::IListener*)&tmpCollisionListener); // todo
 
 	for (int i = 0; i < 4; ++i) {
 		WriteLog("delete mTires[i]");
@@ -140,7 +140,7 @@ static const float HardTurnTightenSpeed = 0.0f;
 static const float Tweak_GameBreakerMaxSteer = 60.0f;
 static const float Tweak_TuningSteering_Ratio = 0.2f;
 
-SuspensionRacerMW::Tire::Tire(float radius, int index, const Attrib::Gen::car_tuning *specs, MWCarTuning *mwSpecs)
+SuspensionRacerMW::Tire::Tire(float radius, int index, const Attrib::Gen::vehicle *specs, MWCarTuning *mwSpecs)
 	: WheelMW(1), mRadius(UMath::Max(radius, 0.1f)), mWheelIndex(index), mAxleIndex(index >> 1), mSpecs(specs), mMWSpecs(mwSpecs), mBrake(0.0f),
 	  mEBrake(0.0f), mAV(0.0f), mLoad(0.0f), mLateralForce(0.0f), mLongitudeForce(0.0f), mDriveTorque(0.0f), mBrakeTorque(0.0f), mLateralBoost(1.0f),
 	  mTractionBoost(1.0f), mSlip(0.0f), mLastTorque(0.0f), mRoadSpeed(0.0f), mAngularAcc(0.0f), mTraction(1.0f), mBottomOutTime(0.0f),
@@ -386,9 +386,11 @@ float SuspensionRacerMW::Tire::UpdateLoaded(float lat_vel, float fwd_vel, float 
 	}
 
 	// factor surface friction into the tire force
-	// todo this is different in UC
-	//mLateralForce *= mSurface.LATERAL_GRIP();
-	//mLongitudeForce *= mSurface.DRIVE_GRIP();
+	auto surface = (Attrib::Gen::simsurface::_LayoutStruct*)mSurface.mLayoutPtr;
+	if (surface) {
+		mLateralForce *= surface->LATERAL_GRIP;
+		mLongitudeForce *= surface->DRIVE_GRIP;
+	}
 
 	if (fwd_vel > 1.0f) {
 		mLongitudeForce -= UMath::Sina(mSlipAngle) * mLateralForce * mDragReduction / mMWSpecs->GRIP_SCALE.At(mAxleIndex);
@@ -403,8 +405,10 @@ float SuspensionRacerMW::Tire::UpdateLoaded(float lat_vel, float fwd_vel, float 
 		if (mTraction < 1.0f) {
 			float torque = (GetTotalTorque() - mLongitudeForce * mRadius + mLastTorque) * 0.5f;
 			mLastTorque = torque;
-			//float rolling_resistance = RollingFriction * mSurface.ROLLING_RESISTANCE();
 			float rolling_resistance = RollingFriction;
+			if (surface) {
+				rolling_resistance *= surface->ROLLING_RESISTANCE;
+			}
 			float effective_torque = torque - mAV * rolling_resistance;
 			mAngularAcc = (effective_torque / WheelMomentOfInertia) - (mTraction * mSlip) / (mRadius * dT);
 		}
@@ -514,7 +518,7 @@ void SuspensionRacerMW::OnTaskSimulate(float dT) {
 	if (mGameBreaker > 0.0f) {
 		UMath::Vector3 extra_df;
 		UMath::Scale(state.GetUpVector(), Tweak_GameBreakerExtraGs * mGameBreaker * state.mass * 9.81f, extra_df);
-		mRB->_ResolveForce(&extra_df);
+		mRB->ResolveForce(&extra_df);
 	}
 
 	float max_slip = ComputeMaxSlip(state);
@@ -571,7 +575,9 @@ UMath::Vector3* SuspensionRacerMW::GetWheelCenterPos(UMath::Vector3* result, uns
 	if (!mRB) {
 		return result;
 	} else {
-		UMath::ScaleAdd(*mRB->GetUpVector(), GetWheelRadius(i), *result, *result);
+		UMath::Vector3 tmp;
+		mRB->GetUpVector(&tmp);
+		UMath::ScaleAdd(tmp, GetWheelRadius(i), *result, *result);
 		return result;
 	}
 }
@@ -580,7 +586,8 @@ void SuspensionRacerMW::Reset() {
 	SUSPENSIONRACER_FUNCTION_LOG("Reset");
 
 	ISimable *owner = GetOwner();
-	UMath::Vector3 vUp = *mRB->GetUpVector();
+	UMath::Vector3 vUp;
+	mRB->GetUpVector(&vUp);
 
 	unsigned int numonground = 0;
 	this->mGameBreaker = 0.0f;
@@ -624,8 +631,9 @@ void SuspensionRacerMW::OnCollision(const Sim::Collision::Info &cinfo) {
 	}
 	if (actualType == Sim::Collision::Info::WORLD) {
 		if (UMath::Abs(cinfo.normal.y) < 0.1f && mRBComplex && (UMath::LengthSquare(cinfo.closingVel) < Tweak_WallSteerClosingSpeed)) {
-			const UMath::Vector3 &vFoward = *mRB->GetForwardVector();
-			const UMath::Vector3 &vRight = *mRB->GetRightVector();
+			UMath::Vector3 vFoward, vRight;
+			mRB->GetForwardVector(&vFoward);
+			mRB->GetRightVector(&vRight);
 			if ((mSteering.WallNoseTurn == 0.0f) && UMath::LengthSquare(cinfo.objAVel) < Tweak_WallSteerBodySpeed &&
 				UMath::Dot(cinfo.normal, vFoward) <= 0.0f) {
 				UMath::Vector3 rpos;
@@ -1029,7 +1037,7 @@ void SuspensionRacerMW::DoDrifting(const State &state) {
 			UMath::Vector3 moment;
 
 			UMath::Scale(state.GetUpVector(), (mDrift.Value * -ang_vel) * yaw_coef * state.inertia.y, moment);
-			mRB->_ResolveTorque(&moment);
+			mRB->ResolveTorque(&moment);
 		}
 
 		// detect counter steering

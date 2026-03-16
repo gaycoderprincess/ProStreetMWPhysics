@@ -6,11 +6,12 @@ void WheelMW::UpdateSurface(const Attrib::Collection* surface) {
 
 bool WheelMW::InitPosition(ICollisionBody* cb, IRigidBody *rb, double maxcompression) {
 	WHEEL_FUNCTION_LOG("Wheel::InitPosition");
-	auto mat = *rb->GetTransform();
+	UMath::Matrix4 mat;
+	rb->GetMatrix4(&mat);
 	mat.p = *rb->GetPosition();
 	UMath::Vector3 dim;
 	rb->GetDimension(&dim);
-	return UpdatePosition(*rb->GetAngularVelocity(), *rb->GetLinearVelocity(), mat, {0,0,0}, 0.0, maxcompression, false, cb->GetWCollider(), dim.y * 2.0);
+	return UpdatePosition(*rb->GetAngularVelocity(), *rb->GetLinearVelocity(), mat, {0,0,0}, 0.0, maxcompression, false, rb->GetWCollider(), dim.y * 2.0);
 }
 
 bool WheelMW::UpdatePosition(const UMath::Vector3 &body_av, const UMath::Vector3 &body_lv,
@@ -32,8 +33,7 @@ bool WheelMW::UpdatePosition(const UMath::Vector3 &body_av, const UMath::Vector3
 	float prev = vehicle_height * 0.5f;
 	mWorldPos.SetTolerance(UMath::Min(tolerance, prev));
 
-	bool result = WWorldPos::Update(&mWorldPos, &mPosition, &mNormal, IsOnGround() && usecache, collider, WWorldPos::kFail_KeepValid);
-	mNormal.w = -mWorldPos.fHeight;
-	UpdateSurface(mWorldPos.pSurface);
+	bool result = WWorldPos::Update(&mWorldPos, &mPosition, &mNormal, IsOnGround() && usecache, collider, true);
+	UpdateSurface(mWorldPos.fSurface);
 	return result;
 }
