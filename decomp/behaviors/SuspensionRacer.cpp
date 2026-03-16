@@ -461,7 +461,7 @@ void SuspensionRacer::Create(const BehaviorParams& bp) {
 	SUSPENSIONRACER_FUNCTION_LOG("Create");
 
 	*(uintptr_t*)this = (uintptr_t)&NewSuspensionRacerVTable;
-	*(uintptr_t*)&tmpChassis = (uintptr_t)&MWChassis::NewVTable;
+	*(uintptr_t*)&tmpChassis = (uintptr_t)&MWIChassis::NewVTable;
 	tmpChassis.mCOMObject = &bp.fowner->Object;
 	bp.fowner->Object.Add(&tmpChassis);
 
@@ -1130,7 +1130,6 @@ float SuspensionRacer::CalcYawControlLimit(float speed) const {
 		}
 		float percent = UMath::Min(UMath::Abs(speed) / maxspeed, 1.0f);
 
-#ifdef SUSPENSIONRACER_ELISE_TEST
 		unsigned int numunits = mMWInfo->YAW_CONTROL.size();
 		if (numunits > 1) {
 			float ratio = (numunits - 1) * percent;
@@ -1141,20 +1140,8 @@ float SuspensionRacer::CalcYawControlLimit(float speed) const {
 			float b = mMWInfo->YAW_CONTROL[index2];
 			return a + (b - a) * ratio;
 		}
-#else
-		unsigned int numunits = UNDERCOVER_YawControl.size();
-		if (numunits > 1) {
-			float ratio = (numunits - 1) * percent;
-			unsigned int index1 = static_cast<unsigned int>(ratio);
-			ratio -= index1;
-			unsigned int index2 = UMath::Min(numunits - 1, index1 + 1);
-			float a = UNDERCOVER_YawControl[index1];
-			float b = UNDERCOVER_YawControl[index2];
-			return a + (b - a) * ratio;
-		}
-#endif
 	}
-	return UNDERCOVER_YawControl[0];
+	return mMWInfo->YAW_CONTROL[0];
 }
 
 static float LowSpeedSpeed = 0.0f;

@@ -35,6 +35,9 @@ public:
 };
 
 //#define FUNCTION_LOG(name) WriteLog(std::format("{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
+#define WHEEL_FUNCTION_LOG(name) WriteLog(std::format("Wheel::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
+#define CHASSIS_FUNCTION_LOG(name) WriteLog(std::format("Chassis::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
+#define SUSPENSIONSIMPLE_FUNCTION_LOG(name) WriteLog(std::format("SuspensionSimple::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
 #define SUSPENSIONRACER_FUNCTION_LOG(name) WriteLog(std::format("SuspensionRacer::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
 #define ENGINERACER_FUNCTION_LOG(name) WriteLog(std::format("EngineRacer::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)));
 //#define ICHASSIS_FUNCTION_LOG(name) WriteLog(std::format("IChassis::{} called from {:X}", name, (uintptr_t)__builtin_return_address(0)))
@@ -56,240 +59,29 @@ bool bAffectOpponents = false;
 bool bRevLimiter = true;
 float fOpponentRubberband = 0.0;
 
-#include "decomp/ConversionUtil.hpp"
-
 auto cartuning_LookupKey = (uint32_t(__thiscall*)(const ISimable*))0x49D000;
 auto ctor_cartuning = (void(__stdcall*)(Attrib::Gen::vehicle*, uint32_t))0x49CD50;
-
-#define FLOAT_EPSILON 0.000001f
-
-namespace VehicleSystem {
-	float ENABLE_ROLL_STOPS_THRESHOLD = 0.2f;
-};
-
-inline bool IsFront(unsigned int i) {
-	return i < 2;
-}
-
-inline bool IsRear(unsigned int i) {
-	return i > 1;
-}
-
-inline int bClamp(int a, int MINIMUM, int MAXIMUM) {
-	return std::min(std::max(a, MINIMUM), MAXIMUM);
-}
-
-inline float bClamp(float a, float MINIMUM, float MAXIMUM) {
-	return std::min(MAXIMUM, std::max(a, MINIMUM));
-}
-
-namespace UMath {
-	inline Vector4 Vector4Make(const Vector3 &c, float w) {
-		Vector4 res;
-		res.x = c.x;
-		res.y = c.y;
-		res.z = c.z;
-		res.w = w;
-		return res;
-	}
-
-	inline Vector3 Vector4To3(const Vector4 &c) {
-		return {c.x,c.y,c.z};
-	}
-
-	float Abs(float f) { return std::abs(f); }
-	float Min(float a, float b) { return std::min(a, b); }
-	float Max(float a, float b) { return std::max(a, b); }
-	float Lerp(float a, float b, float c) { return std::lerp(a, b, c); }
-	float Sina(float a) { return std::sin(a * (std::numbers::pi*2)); }
-	float Sqrt(float a) { return std::sqrt(a); }
-	float Pow(float a, float b) { return std::pow(a, b); }
-	float Pow(int a, int b) { return std::pow(a, b); }
-	float Atan2a(float a, float b) { return std::atan2(a, b) / (std::numbers::pi*2); }
-
-	inline void Cross(Vector3 a, Vector3 b, Vector3 &r) {
-		r.x = a.y * b.z - a.z * b.y;
-		r.y = a.z * b.x - a.x * b.z;
-		r.z = a.x * b.y - a.y * b.x;
-	}
-
-	inline float Atan2d(float o, float a) {
-		return ANGLE2DEG(Atan2a(o, a));
-	}
-
-	inline void RotateTranslate(Vector3 v, Matrix4 m, Vector3 &result) {
-		result.x = ((m.x.x * v.x) + ((m.z.x * v.z) + (m.y.x * v.y))) + m.p.x;
-		result.y = ((m.x.y * v.x) + ((m.z.y * v.z) + (m.y.y * v.y))) + m.p.y;
-		result.z = ((m.x.z * v.x) + ((m.z.z * v.z) + (m.y.z * v.y))) + m.p.z;
-	}
-
-	inline void Unit(Vector3 a, Vector3 &r) {
-		auto len = a.length();
-		if (len != 0.0) {
-			r.x = a.x / len;
-			r.y = a.y / len;
-			r.z = a.z / len;
-		}
-		else {
-			r = {0,0,0};
-		}
-	}
-
-	void UnitCross(Vector3 a, Vector3 b, Vector3 &r) {
-		r.x = a.y * b.z - a.z * b.y;
-		r.y = a.z * b.x - a.x * b.z;
-		r.z = a.x * b.y - a.y * b.x;
-		Unit(r, r);
-	}
-
-	int Clamp(const int a, const int amin, const int amax) {
-		return a < amin ? amin : (a > amax ? amax : a);
-	}
-
-	float Clamp(const float a, const float amin, const float amax) {
-		return a < amin ? amin : (a > amax ? amax : a);
-	}
-
-	inline float LengthSquare(const Vector3 &a) {
-		return a.x * a.x + a.y * a.y + a.z * a.z;
-	}
-
-	inline float Length(const Vector3 &a) {
-		return std::sqrt(LengthSquare(a));
-	}
-
-	inline float Lengthxz(const Vector3 &a) {
-		auto tmp = a;
-		tmp.y = 0;
-		return tmp.length();
-	}
-
-	inline void Scale(const Vector3 &a, const Vector3 &b, Vector3 &r) {
-		r.x = a.x * b.x;
-		r.y = a.y * b.y;
-		r.z = a.z * b.z;
-	}
-
-	inline void Scale(const Vector3 &a, const float s, Vector3 &r) {
-		r.x = a.x * s;
-		r.y = a.y * s;
-		r.z = a.z * s;
-	}
-
-	inline float Dot(const Vector3 &a, const Vector3 &b) {
-		return a.x * b.x + a.y * b.y + a.z * b.z;
-	}
-
-	inline void Rotate(Vector3 a, Matrix4 m, Vector3 &r) {
-		r.x = m.x.x * a.x + m.y.x * a.y + m.z.x * a.z;
-		r.y = m.x.y * a.x + m.y.y * a.y + m.z.y * a.z;
-		r.z = m.x.z * a.x + m.y.z * a.y + m.z.z * a.z;
-	}
-
-	inline void Add(const Vector3 &a, const Vector3 &b, Vector3 &r) {
-		r.x = a.x + b.x;
-		r.y = a.y + b.y;
-		r.z = a.z + b.z;
-	}
-
-	inline void Sub(const Vector3 &a, const Vector3 &b, Vector3 &r) {
-		r.x = a.x - b.x;
-		r.y = a.y - b.y;
-		r.z = a.z - b.z;
-	}
-
-	//UMath::ScaleAdd((UMath::Vector3)state.matrix.y, counter_yaw - yaw, total_torque, total_torque);
-	//total_torque.x = (counter_yaw - yaw) * state.matrix.y.x + total_torque.x;
-	inline void ScaleAdd(const Vector3 &a, const float s, const Vector3 &b, Vector3 &r) {
-		r.x = s * a.x + b.x;
-		r.y = s * a.y + b.y;
-		r.z = s * a.z + b.z;
-	}
-
-	inline float Ramp(const float a, const float amin, const float amax) {
-		//auto v3 = amax - amin;
-		//if ( v3 <= 0.000001 )
-		//	return 0.0;
-		//auto v5 = (a - amin) / v3;
-		//if ( v5 >= 1.0 )
-		//	return 1.0;
-		//auto result = v5;
-		//if ( v5 < 0.0 )
-		//	return 0.0;
-		//return result;
-
-		//auto v2 = 1.0;
-		//if ( ((a - amin) / (amax - amin)) < 1.0 )
-		//	v2 = ((a - amin) / (amax - amin));
-		//auto v3 = v2;
-		//if ( v2 < 0.0 )
-		//	v3 = 0.0;
-		//return v3;
-
-		float arange = amax - amin;
-		return arange > FLOAT_EPSILON ? std::max(0.0f, std::min((a - amin) / arange, 1.0f)) : 0.0f;
-	}
-
-	// Credits: Brawltendo
-	inline float Limit(const float a, const float l) {
-		float retval;
-		if (!(a * l > 0.f)) {
-			retval = a;
-		} else {
-			if (a > 0.f) {
-				retval = Min(a, l);
-
-			} else {
-				retval = Max(a, l);
-			}
-		}
-		return retval;
-	}
-}
-
-// Credits: Brawltendo
-float Table::GetValue(float input) {
-	const int entries = NumEntries;
-	const float normarg = IndexMultiplier * (input - MinArg);
-	const int index = (int)normarg;
-
-	if (index < 0 || normarg < 0.0f)
-		return pTable[0];
-	if (index >= (entries - 1))
-		return pTable[entries - 1];
-
-	float ind = index;
-	if (ind > normarg)
-		ind -= 1.0f;
-
-	float delta = normarg - ind;
-	return (1.0f - delta) * pTable[index] + delta * pTable[index + 1];
-}
-
-std::vector<float> UNDERCOVER_YawControl = { 0.1, 0.2, 0.65, 1 };
+//auto dtor_simobject = (void(__thiscall*)(void*))0x7BC8A0;
 
 #define GET_FAKE_INTERFACE(base, type, var) { auto ptr = (uintptr_t)this; ptr += offsetof(base, var); return (type*)ptr; }
 
-//auto dtor_simobject = (void(__thiscall*)(void*))0x7BC8A0;
-
-// RaceEngine identical
-// Tiptronic identical
-// EngineDamage identical
-// Inductable identical
+#include "decomp/ConversionUtil.hpp"
+#include "decomp/UMathExtras.h"
+#include "decomp/AverageWindow.h"
 
 #include "MWCarTuning.h"
-#include "decomp/AverageWindow.h"
-#include "decomp/EngineRacer.h"
-#include "decomp/SuspensionRacer.h"
-#include "decomp/MWChassis.cpp"
-#include "decomp/MWRaceEngine.cpp"
-#include "decomp/MWTiptronic.cpp"
-#include "decomp/MWEngineDamage.cpp"
-#include "decomp/MWInductable.cpp"
-#include "decomp/MWTransmission.cpp"
-#include "decomp/MWEngine.cpp"
-#include "decomp/SuspensionRacer.cpp"
-#include "decomp/EngineRacer.cpp"
+
+#include "decomp/behaviors/EngineRacer.h"
+#include "decomp/behaviors/SuspensionRacer.h"
+#include "decomp/interfaces/MWIChassis.cpp"
+#include "decomp/interfaces/MWIRaceEngine.cpp"
+#include "decomp/interfaces/MWITiptronic.cpp"
+#include "decomp/interfaces/MWIEngineDamage.cpp"
+#include "decomp/interfaces/MWIInductable.cpp"
+#include "decomp/interfaces/MWITransmission.cpp"
+#include "decomp/interfaces/MWIEngine.cpp"
+#include "decomp/behaviors/SuspensionRacer.cpp"
+#include "decomp/behaviors/EngineRacer.cpp"
 
 void ValueEditorMenu(float& value) {
 	ChloeMenuLib::BeginMenu();
@@ -497,19 +289,8 @@ void DebugMenu() {
 	ChloeMenuLib::EndMenu();
 }
 
-class FactoryEntry {
-public:
-	UCrc32 mSignature;
-	void* mConstructor;
-	FactoryEntry *mTail;
-
-	static inline auto& mHead = *(FactoryEntry**)0xACDE7C;
-};
-FactoryEntry __EngineRacerMW;
-FactoryEntry __SuspensionRacerMW;
-
 auto oldctorbase = (void*(__thiscall*)(void*, BehaviorParams*, int))0x71CE50;
-SuspensionRacer* ChassisHumanConstruct(BehaviorParams* bp) {
+SuspensionRacer* SuspensionRacerConstruct(BehaviorParams* bp) {
 	auto data = pSuspension = (SuspensionRacer*)gFastMem.Alloc(sizeof(SuspensionRacer), nullptr);
 	memset(data,0,sizeof(SuspensionRacer));
 	oldctorbase(data, bp, 0);
@@ -525,17 +306,23 @@ EngineRacer* EngineRacerConstruct(BehaviorParams* bp) {
 	return data;
 }
 
-void RegisterNewBehaviors() {
-	__EngineRacerMW.mSignature.mCRC = Attrib::StringHash32("EngineRacerMW");
-	__EngineRacerMW.mConstructor = (void*)&EngineRacerConstruct;
-	__EngineRacerMW.mTail = FactoryEntry::mHead;
-	FactoryEntry::mHead = &__EngineRacerMW;
+class FactoryEntry {
+public:
+	UCrc32 mSignature;
+	void* mConstructor;
+	FactoryEntry *mTail;
 
-	__SuspensionRacerMW.mSignature.mCRC = Attrib::StringHash32("SuspensionRacerMW");
-	__SuspensionRacerMW.mConstructor = (void*)&ChassisHumanConstruct;
-	__SuspensionRacerMW.mTail = FactoryEntry::mHead;
-	FactoryEntry::mHead = &__SuspensionRacerMW;
-}
+	static inline auto& mHead = *(FactoryEntry**)0xACDE7C;
+
+	FactoryEntry(const char* name, void* function) {
+		mSignature.mCRC = Attrib::StringHash32(name);
+		mConstructor = function;
+		mTail = FactoryEntry::mHead;
+		FactoryEntry::mHead = this;
+	}
+};
+FactoryEntry __EngineRacerMW("EngineRacerMW", (void*)&EngineRacerConstruct);
+FactoryEntry __SuspensionRacerMW("SuspensionRacerMW", (void*)&SuspensionRacerConstruct);
 
 bool bEnabledGrip = true;
 bool bEnabledSpeed = true;
@@ -670,8 +457,6 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 			NyaHooks::LateInitHook::Init();
 			NyaHooks::LateInitHook::aFunctions.push_back([](){
-				RegisterNewBehaviors();
-
 				DLLDirSetter _setdir;
 
 				for (const auto& entry : std::filesystem::directory_iterator("CarDataDump")) {
@@ -693,22 +478,11 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 
 			ChloeMenuLib::RegisterMenu("MW Physics Debug Menu", &DebugMenu);
 
-			NyaHookLib::PatchRelative(NyaHookLib::JMP, 0x41AD80, &StickyNOSASM);
-
 			NyaHookLib::PatchRelative(NyaHookLib::CALL, 0x72BD95, &LookupBehaviorSignatureHooked);
 			NyaHookLib::PatchRelative(NyaHookLib::CALL, 0x72BD3E, &LookupBehaviorSignatureHooked);
 
-			// AIVehicle::GetOverSteerCorrection, disable road surface getter during race cutscenes
-			//NyaHookLib::Patch<uint16_t>(0x40AFE9, 0x9090);
-
+			NyaHookLib::PatchRelative(NyaHookLib::JMP, 0x41AD80, &StickyNOSASM);
 			NyaHookLib::Patch<uint16_t>(0x55C9CE, 0x9090); // proper nos display
-
-			NyaHooks::SkipFEFixes::Init();
-
-			//SkipFE = true;
-			//SkipFEForever = true;
-			//SkipFEPlayerCar = "rx7";
-			//SkipFETrackNumber = 6000;
 
 			if (std::filesystem::exists("NFSPSMWPhysics_gcp.toml")) {
 				auto config = toml::parse_file("NFSPSMWPhysics_gcp.toml");
@@ -721,6 +495,12 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID) {
 				bSpeedbreakerEnabled = config["speedbreaker"].value_or(bSpeedbreakerEnabled);
 				bRevLimiter = config["rev_limiter"].value_or(bRevLimiter);
 			}
+
+			//NyaHooks::SkipFEFixes::Init();
+			//SkipFE = true;
+			//SkipFEForever = true;
+			//SkipFEPlayerCar = "rx7";
+			//SkipFETrackNumber = 6000;
 
 			WriteLog("Mod initialized");
 		} break;

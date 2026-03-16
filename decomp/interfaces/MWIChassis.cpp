@@ -1,4 +1,4 @@
-namespace MWChassis {
+namespace MWIChassis {
 	SuspensionRacer* GetSuspensionRacer(uintptr_t ptr) {
 		ptr -= offsetof(SuspensionRacer, tmpChassis);
 		return (SuspensionRacer*)ptr;
