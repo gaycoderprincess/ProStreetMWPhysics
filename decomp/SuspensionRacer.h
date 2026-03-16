@@ -23,6 +23,10 @@ public:
 		Reset();
 	}
 
+	~MWWheel() {
+		Reset();
+	}
+
 	void Reset() {
 		SUSPENSIONRACER_FUNCTION_LOG("Wheel::Reset");
 		mSurfaceStick = 0.0;
@@ -111,14 +115,6 @@ public:
 
 	const SimSurface *GetSurface() const {
 		return (SimSurface*)&mSurface;
-
-		//static auto surf = Attrib::Instance(Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves")), 0);
-		//surf.mCollection = Attrib::FindCollection(Attrib::StringHash32("simsurface"), Attrib::StringHash32("asphalt_no_leaves"));
-		//return (SimSurface*)&surf;
-
-		//static SimSurface tmp = {};
-		//memset(&tmp,0,sizeof(tmp));
-		//return &tmp;
 	}
 
 	const UMath::Vector3 &GetVelocity() const {
