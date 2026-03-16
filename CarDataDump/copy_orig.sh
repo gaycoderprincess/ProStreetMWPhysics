@@ -12,7 +12,7 @@ cp orig_mw_full/911gt2.conf 997gt2.conf
 cp orig_mw_full/911gt2_top.conf 997gt2_top.conf
 cp orig_mw_full/911turbo.conf 997tt.conf
 cp orig_mw_full/911turbo_top.conf 997tt_top.conf
-cp orig_mw_full/bmwm3gtre46.conf bmwm3.conf
+cp orig_mw_full/bmwm3gtr.conf bmwm3.conf
 cp orig_mw_full/bmwm3gtre46_top.conf bmwm3_top.conf
 cp orig_mw_full/bmwm3gtr.conf bmwm3e92.conf
 cp orig_mw_full/bmwm3gtr_top.conf bmwm3e92_top.conf
