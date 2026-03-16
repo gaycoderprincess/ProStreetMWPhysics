@@ -50,7 +50,7 @@ You should be able to build the project now in CLion.
 - Audi S4 - Audi A4 (Most Wanted)
 - Audi TT - Audi TT (Most Wanted)
 - BMW M3 E46 - BMW M3 GTR (Most Wanted)
-- BMW M3 E92 - BMW M3 GTR Street (Most Wanted)
+- BMW M3 E92 - BMW M3 GTR (Most Wanted)
 - BMW Z4 M Coupe - Nissan 350Z (Carbon)
 - Bugatti Veyron - Audi R8 (Carbon)
 - Cadillac CTS-V - Cadillac CTS (Most Wanted)
