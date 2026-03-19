@@ -10,14 +10,20 @@ Massive thanks to everyone involved with [dbalatoni13's MW reverse engineering p
 - Plop the files into your game folder.
 - Enjoy, nya~ :3
 
+## Features
+
+- Full 1:1 port of Most Wanted's engine, gearbox, suspension and tire physics as well as the aerodynamics such as drag and air stabilization
+- The mod is based on actual code rather than tweaks of random VLT values, ensuring the handling is as accurate as possible
+- Every car that exists in Most Wanted uses the actual data from Most Wanted's VLT nodes, and cars that don't exist in Most Wanted use either Carbon's values or a similar car's values from either game
+- Nitrous no longer fires in bursts, you need to hold the NOS button down to use it, and it regenerates just like MW
+- Perfect starts have been re-added, though there's no visual indication of the target RPM so you'll have to go by feel
+- Speedbreaker has been re-added, bound to the X key on the keyboard and the X button on an Xbox controller
+
 ## Useful info
 
 - Fine tuning has been entirely redone, many options might change car performance in different ways than before, and the following tunings do not affect anything anymore: Brake Pressure, Camber, Caster, Start/End Boost, Tire Pressure, Handbrake Pressure, Toe, Cam Timing
 - FOR DEVELOPERS: Almost all VLT values have been replaced! For editing car handling, edit the files in `CarDataDump` instead, except for these values: `ASPECT_RATIO`, `FRONT_AXLE`, `MASS`, `RIM_SIZE`, `SECTION_WIDTH`, `TRACK_WIDTH`, `WHEEL_BASE`
 - Manual transmission no longer gives you an advantage, and the clutch button has been entirely removed
-- Nitrous no longer fires in bursts, you need to hold the NOS button down to use it, and it regenerates just like MW
-- Perfect starts have been re-added, though there's no visual indication of the target RPM so you'll have to go by feel
-- Speedbreaker has been re-added, bound to the X key on the keyboard and the X button on an Xbox controller
 
 ## Known issues
 
