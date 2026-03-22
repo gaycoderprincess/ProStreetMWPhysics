@@ -503,6 +503,11 @@ void GetLerpedCarTuning(MWCarTuning& out, const std::string& carName, const Vehi
 			out.SHOCK_EXT_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_SHOCK_REBOUND_RATE], 0.15);
 			out.SPRING_STIFFNESS.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::FRONT_SPRING_RATE], 0.3);
 			out.SPRING_STIFFNESS.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::REAR_SPRING_RATE], 0.3);
+			out.BRAKES.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::BRAKE_BIAS], -0.2);
+			out.BRAKES.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::BRAKE_BIAS], 0.2);
+			out.BRAKES.Front *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::BRAKE_PRESSURE], 0.2);
+			out.BRAKES.Rear *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::BRAKE_PRESSURE], 0.2);
+			out.EBRAKE *= GetPhysicsTuningValue(real->PhysicsTuning[VehicleCustomizations::HANDBRAKE_PRESSURE], 0.2);
 		}
 		else {
 			WriteLog(std::format("Failed to find FECarRecord for customized {}", model));
