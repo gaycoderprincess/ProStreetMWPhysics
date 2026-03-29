@@ -91,6 +91,7 @@ void UpdatePerfectLaunchText() {
 
 #include "MWCarTuning.h"
 
+#include "decomp/Physics.h"
 #include "decomp/behaviors/MWWheel.h"
 #include "decomp/behaviors/MWChassisBase.h"
 #include "decomp/behaviors/SuspensionRacer.h"
@@ -294,7 +295,7 @@ SuspensionSimpleMW* SuspensionSimpleConstruct(BehaviorParams* bp) {
 }
 
 SuspensionRacerMW* SuspensionRacerConstruct(BehaviorParams* bp) {
-	auto data = pSuspension = (SuspensionRacerMW*)gFastMem.Alloc(sizeof(SuspensionRacerMW), nullptr);
+	auto data = (SuspensionRacerMW*)gFastMem.Alloc(sizeof(SuspensionRacerMW), nullptr);
 	memset(data,0,sizeof(SuspensionRacerMW));
 	oldctorbase(data, bp, 0);
 	data->Create(*bp);
@@ -302,7 +303,7 @@ SuspensionRacerMW* SuspensionRacerConstruct(BehaviorParams* bp) {
 }
 
 EngineRacer* EngineRacerConstruct(BehaviorParams* bp) {
-	auto data = pEngine = (EngineRacer*)gFastMem.Alloc(sizeof(EngineRacer), nullptr);
+	auto data = (EngineRacer*)gFastMem.Alloc(sizeof(EngineRacer), nullptr);
 	memset(data,0,sizeof(EngineRacer));
 	oldctorbase(data, bp, 0);
 	data->Create(*bp);

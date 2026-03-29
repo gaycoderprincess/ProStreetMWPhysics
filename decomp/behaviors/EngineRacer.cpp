@@ -100,6 +100,8 @@ void EngineRacer::Create(const BehaviorParams &bp) {
 		mCarInfo.GetLayout()->EBRAKE = mMWInfo->EBRAKE;
 	}
 
+	pEngine = this;
+
 	WriteLog("EngineRacer::Create finished");
 }
 
@@ -470,11 +472,11 @@ float EngineRacer::GetDriveWheelSlippage() const {
 	int drivewheels = 0;
 	if (RearWheelDrive()) {
 		drivewheels += 2;
-		retval += mSuspension->GetWheelSlip(TIRE_RR) + mSuspension->GetWheelSlip(TIRE_RL);
+		retval += mSuspension->GetWheelSlip(2) + mSuspension->GetWheelSlip(3);
 	}
 	if (FrontWheelDrive()) {
 		drivewheels += 2;
-		retval += mSuspension->GetWheelSlip(TIRE_FL) + mSuspension->GetWheelSlip(TIRE_FR);
+		retval += mSuspension->GetWheelSlip(0) + mSuspension->GetWheelSlip(1);
 	}
 
 	return retval / drivewheels;
